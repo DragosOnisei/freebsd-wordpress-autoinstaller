@@ -105,7 +105,7 @@ EOF_WPDATABASE
 printf "."
 
 ## Install all of the required PHP stuff ##
-pkg install -y mod_php74 php74-mysqli php74-tokenizer php74-zlib php74-zip php74 rsync php74-gd curl php74-curl php74-xml php74-bcmath php74-json php74-mbstring php74-pecl-imagick php74-pecl-imagick-im7 php74-iconv php74-filter php74-pecl-json_post php74-pecl-jsond php74-pear-Services_JSON php74-exif php74-fileinfo php74-openssl php74-dom php74-session php74-ctype php74-simplexml php74-phar php74-gmp &> /dev/null
+pkg install -y mod php80 php80-mysali php80-tokenizer php80-zlib php80-zip php80 rsync php80-gd curl php80-curl php80-xmi php80-bemath php80-mbstring php80-pecI-imagick php80-pecI-imagick-im? php80-iconv php80-filter php80-pec1-json_post php80-pear-Services_JSON php80-exif php80-fileinfo php80-dom php80-session php80-ctype php80-simplexmI php80-phar php80-gmp &> /dev/null
 
 printf "."
 
