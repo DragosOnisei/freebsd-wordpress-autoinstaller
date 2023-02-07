@@ -515,7 +515,7 @@ chown -R www /home/www
 pw usermod www -d /home/www
 #sed -i '' "/World Wide Web Owner/s/\/nonexistent/\/home\/www/" /etc/master.passwd
 
-sudo -u www wp core install --url=127.0.0.1 --title="GWIT Hosted Wordpress Site" --admin_user=$WP_CLI_USERNAME --admin_password=$WP_CLI_USER_PASSWORD --admin_email=${WP_CLI_USER_EMAIL} &> /dev/null
+sudo -u www wp core install --url=127.0.0.1 --title="Dragos Created Website" --admin_user=$WP_CLI_USERNAME --admin_password=$WP_CLI_USER_PASSWORD --admin_email=${WP_CLI_USER_EMAIL} &> /dev/null
 sudo -u www wp rewrite structure '/%postname%/' --hard &> /dev/null
 sudo -u www wp plugin delete akismet hello &> /dev/null
 sudo -u www wp site empty --yes &> /dev/null
