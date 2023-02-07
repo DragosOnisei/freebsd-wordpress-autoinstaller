@@ -495,8 +495,12 @@ printf "Initializing the WordPress installation and removing the default trash: 
 #WP_CLI_USER_PASSWORD=$(makepasswd --minchars 43 --maxchars 51)
 #WP_CLI_USER_EMAIL=$(makepasswd --minchars 3 --maxchars 7 --string=qwertyuiopasdfghjklzxcvbnm)@nonexistentdomain.net
 
-WP_CLI_USERNAME=defadm_$(pwgen $(echo $(( $RANDOM % 2 + 3 ))) 1 --no-capitalize --no-numerals)
-WP_CLI_USER_PASSWORD=$(pwgen $(echo $(( $RANDOM % 11 + 51 ))) 1 --secure)
+#WP_CLI_USERNAME=defadm_$(pwgen $(echo $(( $RANDOM % 2 + 3 ))) 1 --no-capitalize --no-numerals)
+#WP_CLI_USER_PASSWORD=$(pwgen $(echo $(( $RANDOM % 11 + 51 ))) 1 --secure)
+#WP_CLI_USER_EMAIL=$(pwgen $(echo $(( $RANDOM % 2 + 3 ))) 1 --no-capitalize --no-numerals)@nonexistentdomain.net
+
+WP_CLI_USERNAME=admin
+WP_CLI_USER_PASSWORD=admin
 WP_CLI_USER_EMAIL=$(pwgen $(echo $(( $RANDOM % 2 + 3 ))) 1 --no-capitalize --no-numerals)@nonexistentdomain.net
 
 mkdir -p /home/www/.wp-cli
