@@ -134,12 +134,9 @@ EOF_ENABLEPHPFILES
 printf "."
 
 ## Make a selfsigned SSL cert
-mkdir -p /usr/local/www/apache24/ssl/
 
-openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /usr/local/www/apache24/ssl/self.key -out /usr/local/www/apache24/ssl/self.crt -subj "/C=GB/ST=London/L=London/O=Global Security/OU=Gateway-IT Department/CN=gateway-it.intranet" &> /dev/null
 
-chown www:www /usr/local/www/apache24/ssl/self.key
-chown www:www /usr/local/www/apache24/ssl/self.crt
+## Done Make a selfsigned SSL cert
 
 printf ". "
 
