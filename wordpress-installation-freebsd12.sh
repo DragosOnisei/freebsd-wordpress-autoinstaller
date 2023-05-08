@@ -471,15 +471,6 @@ if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROT
 }
 
 
-/* START New From ChatGPT for Cloudflare. */
-
-if (isset($_SERVER['HTTP_CF_VISITOR'])) {
-    $_SERVER['HTTPS'] = 'on';
-}
-
-/* END From ChatGPT for Cloudflare. */
-
-
 /* That's all, stop editing! Happy publishing. */
 
 /** Absolute path to the WordPress directory. */
