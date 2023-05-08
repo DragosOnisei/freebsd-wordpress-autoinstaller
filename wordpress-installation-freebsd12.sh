@@ -44,7 +44,7 @@ printf "Installing and configuring software: "
 ## Pre-Install the software required for basic jail stuff ##
 pkg install -y nano &> /dev/null
 pkg install -y mod_php80 php80-mysqli php80-tokenizer php80-zlib php80-zip php80 rsync php80-gd curl php80-curl php80-xml php80-bcmath php80-mbstring php80-pecl-imagick php80-pecl-imagick-im7 php80-iconv php80-filter php80-pecl-json_post php80-pear-Services_JSON php80-exif php80-fileinfo php80-dom php80-session php80-ctype php80-simplexml php80-phar php80-gmp &> /dev/null
-pkg install -y apache24 mariadb103-server mariadb103-client
+pkg install -y apache24 mariadb106-server mariadb106-client
 sysrc apache24_enable=yes mysql_enable=yes &> /dev/null
 service apache24 start &> /dev/null
 
@@ -61,7 +61,7 @@ figlet GATEWAY - IT > /etc/motd
 service motd restart &> /dev/null
 
 ## Up to 12 Oct 2020 the newest version of working MariaDB of FreeBSD was 10.3, that's why it is used here. ##
-pkg install -y apache24 mariadb103-server mariadb103-client &> /dev/null
+pkg install -y apache24 mariadb106-server mariadb106-client &> /dev/null
 
 printf "."
 
@@ -470,6 +470,17 @@ if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROT
 	$_SERVER['HTTPS'] = 'on';
 }
 
+/* NEW */
+
+
+if (strpos($_SERVER['HTTP_X_FORWARDED_PROTO'], 'https') !== false)
+$_SERVER['HTTPS']='on';
+if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
+$_SERVER['HTTPS'] = 'on';
+}
+
+
+/* NEW */
 
 /* That's all, stop editing! Happy publishing. */
 
@@ -512,7 +523,7 @@ printf "Initializing the WordPress installation and removing the default trash: 
 
 WP_CLI_USERNAME=admin
 WP_CLI_USER_PASSWORD=admin
-WP_CLI_USER_EMAIL=$(pwgen $(echo $(( $RANDOM % 2 + 3 ))) 1 --no-capitalize --no-numerals)@nonexistentdomain.net
+WP_CLI_USER_EMAIL=dragosonisei@gmail.com
 
 mkdir -p /home/www/.wp-cli
 touch /home/www/.wp-cli/config.yml
