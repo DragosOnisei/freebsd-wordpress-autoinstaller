@@ -44,41 +44,12 @@ printf "Installing and configuring software: "
 ## Pre-Install the software required for basic jail stuff ##
 pkg install -y nano &> /dev/null
 pkg install -y mod_php80 php80-mysqli php80-tokenizer php80-zlib php80-zip php80 rsync php80-gd curl php80-curl php80-xml php80-bcmath php80-mbstring php80-pecl-imagick php80-pecl-imagick-im7 php80-iconv php80-filter php80-pecl-json_post php80-pear-Services_JSON php80-exif php80-fileinfo php80-dom php80-session php80-ctype php80-simplexml php80-phar php80-gmp &> /dev/null
-pkg install -y apache24 mariadb106-server mariadb106-client
-sysrc apache24_enable=yes mysql_enable=yes &> /dev/null
-service apache24 start &> /dev/null
-
-
-## Install the software required for basic jail stuff ##
-pkg update -fq &> /dev/null
-pkg upgrade -y &> /dev/null
-pkg install -y nano htop bmon iftop pwgen sudo figlet &> /dev/null
-
-printf "."
-
-## Set the correct banner ##
-figlet GATEWAY - IT > /etc/motd
-service motd restart &> /dev/null
-
-## Up to 30 JUN 2023 the newest version of working MariaDB of FreeBSD was 10.6, that's why it is used here. ##
 pkg install -y apache24 mariadb106-server mariadb106-client &> /dev/null
-
-printf "."
-
-## Enable and start the services ##
 sysrc apache24_enable=yes mysql_enable=yes &> /dev/null
 service apache24 start &> /dev/null
 service mysql-server start &> /dev/null
 
-#### Create if check to perform health check on MariaDB server and Apache24 ####
-#### Create if check to perform health check on MariaDB server and Apache24 ####
-
 ## Generate all of the random values/secrets that are required in the setup ##
-#DB_ROOT_PASSWORD=$(makepasswd --minchars 43 --maxchars 51)
-#DB_WPDB_NAME=wpdb_$(makepasswd --minchars 3 --maxchars 5 --string=qwertyuiopasdfghjklzxcvbnm)
-#DB_WPDB_USER=wpdbuser_$(makepasswd --minchars 4 --maxchars 6 --string=qwertyuiopasdfghjklzxcvbnm)
-#DB_WPDB_USER_PASSWORD=$(makepasswd --minchars 43 --maxchars 53)
-
 DB_ROOT_PASSWORD=$(pwgen $(echo $(( $RANDOM % 11 + 51 ))) 1)
 DB_WPDB_NAME=wpdb_$(pwgen $(echo $(( $RANDOM % 1 + 3 ))) 1 --no-numerals --no-capitalize)
 DB_WPDB_USER=wpdbuser_$(pwgen $(echo $(( $RANDOM % 1 + 3 ))) 1 --no-numerals --no-capitalize)
@@ -86,7 +57,6 @@ DB_WPDB_USER_PASSWORD=$(pwgen $(echo $(( $RANDOM % 11 + 51 ))) 1)
 
 ## Secure the MariaDB install ##
 mysql_secure_installation <<EOF_MSQLSI &> /dev/null
-
 n
 y
 y
@@ -99,27 +69,21 @@ SET PASSWORD FOR 'root'@'localhost' = PASSWORD('${DB_ROOT_PASSWORD}');
 FLUSH PRIVILEGES;
 EOF_SETROOTPASS
 
-#### Create check if password lockdown worked, if not, kill the process ####
-#### Create check if password lockdown worked, if not, kill the process ####
-
-## Create wordpress database and assign a new user to it ##
-mysql -uroot -p${DB_ROOT_PASSWORD} << EOF_WPDATABASE
+## Create WordPress database and assign a new user to it ##
+mysql -uroot -p"${DB_ROOT_PASSWORD}" << EOF_WPDATABASE
 CREATE DATABASE ${DB_WPDB_NAME};
-CREATE USER '${DB_WPDB_USER}'@localhost IDENTIFIED BY '${DB_WPDB_USER_PASSWORD}';
+CREATE USER '${DB_WPDB_USER}'@'localhost' IDENTIFIED BY '${DB_WPDB_USER_PASSWORD}';
 GRANT ALL PRIVILEGES ON ${DB_WPDB_NAME}.* TO ${DB_WPDB_USER}@'localhost';
 FLUSH PRIVILEGES;
 EOF_WPDATABASE
 
-printf "."
+## Install all required PHP extensions ##
+pkg install -y mod_php80 php80-mysqli php80-tokenizer php80-zlib php80-zip php80 rsync php80-gd curl php80-curl php80-xml php80-bcmath php80-mbstring php80-pecl-imagick php80-pecl-imagick-im7 php80-iconv php80-filter php80-pecl-json_post php80-pear-Services_JSON php80-exif php80-fileinfo php80-dom php80-session php80-ctype php80-simplexml php80-phar php80-gmp &> /dev/null
 
-## Install all of the required PHP stuff ##
-pkg install -y mod_php80 php80-mysali php80-tokenizer php80-zlib php80-zip php80 rsync php80-gd curl php80-curl php80-xmi php80-bemath php80-mbstring php80-pecI-imagick php80-pecI-imagick-im? php80-iconv php80-filter php80-pec1-json_post php80-pear-Services_JSON php80-exif php80-fileinfo php80-dom php80-session php80-ctype php80-simplexmI php80-phar php80-gmp &> /dev/null
-
-printf "."
-
+## Configure PHP ##
 cp /usr/local/etc/php.ini-production /usr/local/etc/php.ini
 
-cat <<'EOF_ENABLEPHPFILES' | cat > /usr/local/etc/apache24/Includes/php.conf
+cat << 'EOF_ENABLEPHPFILES' | cat > /usr/local/etc/apache24/Includes/php.conf
 <IfModule dir_module>
     DirectoryIndex index.php index.html
     <FilesMatch "\.php$">
