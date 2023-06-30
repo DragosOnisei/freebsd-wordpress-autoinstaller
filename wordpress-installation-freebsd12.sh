@@ -71,7 +71,6 @@ service apache24 start &> /dev/null
 service mysql-server start &> /dev/null
 
 #### Create if check to perform health check on MariaDB server and Apache24 ####
-#### Create if check to perform health check on MariaDB server and Apache24 ####
 
 ## Generate all of the random values/secrets that are required in the setup ##
 #DB_ROOT_PASSWORD=$(makepasswd --minchars 43 --maxchars 51)
@@ -99,7 +98,6 @@ SET PASSWORD FOR 'root'@'localhost' = PASSWORD('${DB_ROOT_PASSWORD}');
 FLUSH PRIVILEGES;
 EOF_SETROOTPASS
 
-#### Create check if password lockdown worked, if not, kill the process ####
 #### Create check if password lockdown worked, if not, kill the process ####
 
 ## Create wordpress database and assign a new user to it ##
@@ -133,18 +131,6 @@ EOF_ENABLEPHPFILES
 
 printf "."
 
-## Make a selfsigned SSL cert
-mkdir -p /usr/local/www/apache24/ssl/
-
-openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /usr/local/www/apache24/ssl/self.key -out /usr/local/www/apache24/ssl/self.crt -subj "/C=GB/ST=London/L=London/O=Global Security/OU=Gateway-IT Department/CN=gateway-it.intranet" &> /dev/null
-
-chown www:www /usr/local/www/apache24/ssl/self.key
-chown www:www /usr/local/www/apache24/ssl/self.crt
-
-## Done Make a selfsigned SSL cert
-
-printf ". "
-
 printf "${GREEN}Done${NC}\n"
 printf "Downloading WordPress, WP-CLI and populating default config files: "
 
@@ -162,7 +148,7 @@ rm /usr/local/etc/apache24/httpd.conf
 
 cat <<'EOF_APACHECONFIG' | cat > /usr/local/etc/apache24/httpd.conf
 ServerRoot "/usr/local"
-Listen 443
+Listen 80
 LoadModule mpm_prefork_module libexec/apache24/mod_mpm_prefork.so
 LoadModule authn_file_module libexec/apache24/mod_authn_file.so
 LoadModule authn_core_module libexec/apache24/mod_authn_core.so
@@ -210,10 +196,6 @@ ServerAdmin random@rdomain.intranet
     AllowOverride None
     Require all denied
 </Directory>
-
-SSLEngine on
-SSLCertificateFile /usr/local/www/apache24/ssl/self.crt
-SSLCertificateKeyFile /usr/local/www/apache24/ssl/self.key
 
 DocumentRoot "/usr/local/www/apache24/data"
 <Directory "/usr/local/www/apache24/data">
@@ -457,30 +439,9 @@ $table_prefix = 'wp_';
 // define('DISABLE_WP_CRON', true);
 define('WP_DEBUG', false);
 
-define('WP_SITEURL', 'https://'.$_SERVER['HTTP_HOST']);
-define('WP_HOME', 'https://'.$_SERVER['HTTP_HOST']);
-define('FORCE_SSL_ADMIN', true);
+define('WP_SITEURL', 'http://'.$_SERVER['HTTP_HOST']);
+define('WP_HOME', 'http://'.$_SERVER['HTTP_HOST']);
 
-if (strpos($_SERVER['HTTP_X_FORWARDED_PROTO'], 'https') !== false)
-$_SERVER['HTTPS']='on';
-
-// If we're behind a proxy server and using HTTPS, we need to alert WordPress of that fact
-// see also http://codex.wordpress.org/Administration_Over_SSL#Using_a_Reverse_Proxy
-if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
-	$_SERVER['HTTPS'] = 'on';
-}
-
-/* NEW */
-
-
-if (strpos($_SERVER['HTTP_X_FORWARDED_PROTO'], 'https') !== false)
-$_SERVER['HTTPS']='on';
-if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
-$_SERVER['HTTPS'] = 'on';
-}
-
-
-/* NEW */
 
 /* That's all, stop editing! Happy publishing. */
 
