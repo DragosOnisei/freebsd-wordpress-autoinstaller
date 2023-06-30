@@ -83,9 +83,8 @@ mysql_secure_installation
 printf "\n"
 
 ## Set the MySQL root password ##
-read -p "Enter the new MySQL root password: " mysql_root_password
+read -sp "Enter the new MySQL root password: " mysql_root_password
 mysql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '${mysql_root_password}';" --connect-expired-password &> /dev/null
-
 
 printf "\n"
 
