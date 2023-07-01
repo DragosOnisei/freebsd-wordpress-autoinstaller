@@ -536,7 +536,7 @@ IPADDR=$(ifconfig | grep "192\|10\|172" | awk '{print $2}' | awk '/^192|^10|^172
 #${CYAN}https://$(hostname)${NC} or ${CYAN}https://$(curl -s ifconfig.me)${NC} to configure your new site. \n"
 
 printf "The installation is now finished. In case you forgot, this VM IP is: ${CYAN}${IPADDR}${NC}\n"
-printf "Go to ${CYAN}https://${IPADDR}/wp-admin/${NC} if you'd like to configure or test your new WordPress website.\n"
+printf "Go to ${CYAN}http://${IPADDR}/wp-admin/${NC} if you'd like to configure or test your new WordPress website.\n"
 
 printf "\n"
 
