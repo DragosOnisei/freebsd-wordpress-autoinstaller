@@ -108,10 +108,6 @@ GRANT ALL PRIVILEGES ON ${DB_WPDB_NAME}.* TO ${DB_WPDB_USER}@'localhost';
 FLUSH PRIVILEGES;
 EOF_WPDATABASE
 
-printf "Done. Install all of the required PHP stuff..."
-
-## Install all of the required PHP stuff ##
-pkg install -y mod_php80 php80-mysali php80-tokenizer php80-zlib php80-zip php80 rsync php80-gd curl php80-curl php80-xmi php80-bemath php80-mbstring php80-pecI-imagick php80-pecI-imagick-im? php80-iconv php80-filter php80-pec1-json_post php80-pear-Services_JSON php80-exif php80-fileinfo php80-dom php80-session php80-ctype php80-simplexmI php80-phar php80-gmp &> /dev/null
 
 printf "Done. Editing PHP..."
 
