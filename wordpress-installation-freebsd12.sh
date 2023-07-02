@@ -39,7 +39,7 @@ else
 fi
 
 printf "\n"
-printf "Installing and configuring software: "
+printf "Installing and configuring software:... "
 
 ## Pre-Install the software required for basic jail stuff ##
 pkg install -y nano &> /dev/null
@@ -54,7 +54,7 @@ pkg update -fq &> /dev/null
 pkg upgrade -y &> /dev/null
 pkg install -y nano htop bmon iftop pwgen sudo figlet &> /dev/null
 
-printf "."
+printf "done. Installing Apache and MariaDB..."
 
 ## Set the correct banner ##
 figlet GATEWAY - IT > /etc/motd
@@ -63,7 +63,7 @@ service motd restart &> /dev/null
 ## Up to 12 Oct 2020 the newest version of working MariaDB of FreeBSD was 10.3, that's why it is used here. ##
 pkg install -y apache24 mariadb103-server mariadb103-client &> /dev/null
 
-printf "."
+printf "Done. Enable and start the services..."
 
 ## Enable and start the services ##
 sysrc apache24_enable=yes mysql_enable=yes &> /dev/null
@@ -108,12 +108,12 @@ GRANT ALL PRIVILEGES ON ${DB_WPDB_NAME}.* TO ${DB_WPDB_USER}@'localhost';
 FLUSH PRIVILEGES;
 EOF_WPDATABASE
 
-printf "."
+printf "Done. Install all of the required PHP stuff..."
 
 ## Install all of the required PHP stuff ##
 pkg install -y mod_php80 php80-mysali php80-tokenizer php80-zlib php80-zip php80 rsync php80-gd curl php80-curl php80-xmi php80-bemath php80-mbstring php80-pecI-imagick php80-pecI-imagick-im? php80-iconv php80-filter php80-pec1-json_post php80-pear-Services_JSON php80-exif php80-fileinfo php80-dom php80-session php80-ctype php80-simplexmI php80-phar php80-gmp &> /dev/null
 
-printf "."
+printf "Done. Editing PHP..."
 
 cp /usr/local/etc/php.ini-production /usr/local/etc/php.ini
 
@@ -129,7 +129,7 @@ cat <<'EOF_ENABLEPHPFILES' | cat > /usr/local/etc/apache24/Includes/php.conf
 </IfModule>
 EOF_ENABLEPHPFILES
 
-printf "."
+printf "done. Download and install wp-cli..."
 
 printf "${GREEN}Done${NC}\n"
 printf "Downloading WordPress, WP-CLI and populating default config files: "
@@ -140,7 +140,7 @@ curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.pha
 chmod +x wp-cli.phar
 sudo mv wp-cli.phar /usr/local/bin/wp
 
-printf "."
+printf "Done. One last thing..."
 
 ## Make Apache conf file sensible and ready for use with WordPress
 cp /usr/local/etc/apache24/httpd.conf /usr/local/etc/apache24/httpd.conf.BACKUP
@@ -274,7 +274,7 @@ EOF_APACHECONFIG
 #### CODE TO DO A HEALTH CHECK IS NOT YET PRESENT ####
 service apache24 restart &> /dev/null
 
-printf "."
+printf "Instalation Finished Succesfull."
 
 ## Download the latest version of WordPress, move it into the correct folder and assign right permissions ##
 cd /tmp
