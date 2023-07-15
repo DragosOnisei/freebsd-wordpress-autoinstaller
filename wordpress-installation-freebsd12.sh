@@ -48,7 +48,6 @@ pkg install -y apache24 mariadb106-server mariadb106-client
 sysrc apache24_enable=yes mysql_enable=yes &> /dev/null
 service apache24 start &> /dev/null
 
-
 ## Install the software required for basic jail stuff ##
 pkg update -fq &> /dev/null
 pkg upgrade -y &> /dev/null
