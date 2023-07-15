@@ -375,13 +375,13 @@ cat << 'EOF_WPCONFIG' | cat > /usr/local/www/apache24/data/wp-config.php
 
 // ** MySQL settings - You can get this info from your web host ** //
 /** The name of the database for WordPress */
-define( 'DB_NAME', 'database_name_here' );
+define( 'DB_NAME', '${DB_WPDB_NAME}' );
 
 /** MySQL database username */
-define( 'DB_USER', 'username_here' );
+define( 'DB_USER', '${DB_WPDB_USER}' );
 
 /** MySQL database password */
-define( 'DB_PASSWORD', 'password_here' );
+define( 'DB_PASSWORD', '${DB_WPDB_USER_PASSWORD}' );
 
 /** MySQL hostname */
 define( 'DB_HOST', 'localhost' );
