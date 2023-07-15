@@ -44,7 +44,7 @@ printf "Installing and configuring software:... "
 ## Pre-Install the software required for basic jail stuff ##
 pkg install -y nano &> /dev/null
 pkg install -y mod_php83 php83-mysqli php83-tokenizer php83-zlib php83-zip php83 rsync php83-gd curl php83-curl php83-xml php83-bcmath php83-mbstring php83-pecl-imagick php83-pecl-imagick-im7 php83-iconv php83-filter php83-pecl-json_post php83-pear-Services_JSON php83-exif php83-fileinfo php83-dom php83-session php83-ctype php83-simplexml php83-phar php83-gmp &> /dev/null
-pkg install -y apache24 mariadb1011-server mariadb1011-client
+pkg install -y apache24 mariadb105-server mariadb105-client &> /dev/null
 sysrc apache24_enable=yes mysql_enable=yes &> /dev/null
 service apache24 start &> /dev/null
 
@@ -60,38 +60,10 @@ printf "."
 figlet GATEWAY - IT > /etc/motd
 service motd restart &> /dev/null
 
-## Up to 12 Oct 2020 the newest version of working MariaDB of FreeBSD was 10.3, that's why it is used here. ##
-pkg install -y apache24 mariadb1011-server mariadb1011-client &> /dev/null
-
 printf "."
 
-## Enable and start the services ##
-sysrc apache24_enable=yes mysql_enable=yes &> /dev/null
-service apache24 start &> /dev/null
-service mysql-server start &> /dev/null
-
-#### Create if check to perform health check on MariaDB server and Apache24 ####
-
-## Generate all of the random values/secrets that are required in the setup ##
-#DB_ROOT_PASSWORD=$(makepasswd --minchars 43 --maxchars 51)
-#DB_WPDB_NAME=wpdb_$(makepasswd --minchars 3 --maxchars 5 --string=qwertyuiopasdfghjklzxcvbnm)
-#DB_WPDB_USER=wpdbuser_$(makepasswd --minchars 4 --maxchars 6 --string=qwertyuiopasdfghjklzxcvbnm)
-#DB_WPDB_USER_PASSWORD=$(makepasswd --minchars 43 --maxchars 53)
-
-DB_ROOT_PASSWORD=$(pwgen $(echo $(( $RANDOM % 11 + 51 ))) 1)
-DB_WPDB_NAME=wpdb_$(pwgen $(echo $(( $RANDOM % 1 + 3 ))) 1 --no-numerals --no-capitalize)
-DB_WPDB_USER=wpdbuser_$(pwgen $(echo $(( $RANDOM % 1 + 3 ))) 1 --no-numerals --no-capitalize)
-DB_WPDB_USER_PASSWORD=$(pwgen $(echo $(( $RANDOM % 11 + 51 ))) 1)
-
 ## Secure the MariaDB install ##
-mysql_secure_installation <<EOF_MSQLSI &> /dev/null
-
-n
-y
-y
-y
-y
-EOF_MSQLSI
+mysql_secure_installation
 
 mysql << EOF_SETROOTPASS
 SET PASSWORD FOR 'root'@'localhost' = PASSWORD('${DB_ROOT_PASSWORD}');
@@ -107,7 +79,6 @@ CREATE USER '${DB_WPDB_USER}'@localhost IDENTIFIED BY '${DB_WPDB_USER_PASSWORD}'
 GRANT ALL PRIVILEGES ON ${DB_WPDB_NAME}.* TO ${DB_WPDB_USER}@'localhost';
 FLUSH PRIVILEGES;
 EOF_WPDATABASE
-
 
 printf "."
 
@@ -176,7 +147,7 @@ LoadModule autoindex_module libexec/apache24/mod_autoindex.so
 LoadModule dir_module libexec/apache24/mod_dir.so
 LoadModule alias_module libexec/apache24/mod_alias.so
 LoadModule rewrite_module libexec/apache24/mod_rewrite.so
-LoadModule php8_module libexec/apache24/libphp.so
+LoadModule php_module libexec/apache24/libphp.so
 
 # Third party modules
 IncludeOptional etc/apache24/modules.d/[0-9][0-9][0-9]_*.conf
@@ -375,13 +346,13 @@ cat << 'EOF_WPCONFIG' | cat > /usr/local/www/apache24/data/wp-config.php
 
 // ** MySQL settings - You can get this info from your web host ** //
 /** The name of the database for WordPress */
-define( 'DB_NAME', 'database_name_here' );
+define( 'DB_NAME', '${DB_WPDB_NAME}' );
 
 /** MySQL database username */
-define( 'DB_USER', 'username_here' );
+define( 'DB_USER', '${DB_WPDB_USER}' );
 
 /** MySQL database password */
-define( 'DB_PASSWORD', 'password_here' );
+define( 'DB_PASSWORD', '${DB_WPDB_USER_PASSWORD}' );
 
 /** MySQL hostname */
 define( 'DB_HOST', 'localhost' );
@@ -401,15 +372,14 @@ define( 'DB_COLLATE', '' );
  *
  * @since 2.6.0
  */
-define( 'AUTH_KEY',         'put your unique phrase here' );
-define( 'SECURE_AUTH_KEY',  'put your unique phrase here' );
-define( 'LOGGED_IN_KEY',    'put your unique phrase here' );
-define( 'NONCE_KEY',        'put your unique phrase here' );
-define( 'AUTH_SALT',        'put your unique phrase here' );
-define( 'SECURE_AUTH_SALT', 'put your unique phrase here' );
-define( 'LOGGED_IN_SALT',   'put your unique phrase here' );
-define( 'NONCE_SALT',       'put your unique phrase here' );
-
+define( 'AUTH_KEY',         '${WP_SALT1}' );
+define( 'SECURE_AUTH_KEY',  '${WP_SALT2}' );
+define( 'LOGGED_IN_KEY',    '${WP_SALT3}' );
+define( 'NONCE_KEY',        '${WP_SALT4}' );
+define( 'AUTH_SALT',        '${WP_SALT5}' );
+define( 'SECURE_AUTH_SALT', '${WP_SALT6}' );
+define( 'LOGGED_IN_SALT',   '${WP_SALT7}' );
+define( 'NONCE_SALT',       '${WP_SALT8}' );
 /**#@-*/
 
 /**
@@ -435,8 +405,11 @@ $table_prefix = 'wp_';
 // define('DISABLE_WP_CRON', true);
 define('WP_DEBUG', false);
 
-define('WP_SITEURL', 'http://'.$_SERVER['HTTP_HOST']);
-define('WP_HOME', 'http://'.$_SERVER['HTTP_HOST']);
+define( 'WP_AUTO_UPDATE_CORE', true );
+
+/** Define the URLS */
+define( 'WP_HOME', 'http://${WP_SITEURL}' );
+define( 'WP_SITEURL', 'http://${WP_SITEURL}/wordpress' );
 
 
 define( 'WP_CACHE', true );
@@ -466,6 +439,12 @@ sed -i '' "/'DB_NAME'/s/database_name_here/$DB_WPDB_NAME/" /usr/local/www/apache
 sed -i '' "/'DB_USER'/s/username_here/$DB_WPDB_USER/" /usr/local/www/apache24/data/wp-config.php
 sed -i '' "/'DB_PASSWORD'/s/password_here/$DB_WPDB_USER_PASSWORD/" /usr/local/www/apache24/data/wp-config.php
 sed -i '' "/$table_prefix =/s/'wp_'/'${WP_DB_PREFIX}_'/" /usr/local/www/apache24/data/wp-config.php
+
+printf ". "
+
+## Make sure the config file is safe ##
+chown www:www /usr/local/www/apache24/data/wp-config.php
+chmod 440 /usr/local/www/apache24/data/wp-config.php
 
 printf ". "
 
