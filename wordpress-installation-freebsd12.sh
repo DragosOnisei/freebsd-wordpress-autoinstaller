@@ -16,10 +16,15 @@ printf "Installing and configuring software:... \n"
 ## Pre-Install the software required for basic jail stuff ##
 pkg install -y nano &> /dev/null
 pkg install -y mod_php80 php80-mysqli php80-tokenizer php80-zlib php80-zip php80 rsync php80-gd curl php80-curl php80-xml php80-bcmath php80-mbstring php80-pecl-imagick php80-pecl-imagick-im7 php80-iconv php80-filter php80-pecl-json_post php80-pear-Services_JSON php80-exif php80-fileinfo php80-dom php80-session php80-ctype php80-simplexml php80-phar php80-gmp &> /dev/null
-pkg install -y apache24 mariadb104-server mariadb104-client
+pkg install -y apache24 mariadb105-server mariadb105-client
 
 sysrc apache24_enable=yes mysql_enable=yes &> /dev/null
 service apache24 start &> /dev/null
+
+## Upgrade MariaDB from 10.4 to 10.5 ##
+service mysql-server stop &> /dev/null
+pkg install -y mariadb105-server mariadb105-client &> /dev/null
+/usr/local/sbin/mysql-upgrade &> /dev/null
 service mysql-server start &> /dev/null
 
 pkg update -fq &> /dev/null
@@ -101,6 +106,12 @@ sed -i '' "/define( 'LOGGED_IN_SALT',/s/'[^']*'/'${WP_SALT7}'/" /usr/local/www/a
 sed -i '' "/define( 'NONCE_SALT',/s/'[^']*'/'${WP_SALT8}'/" /usr/local/www/apache24/data/wp-config.php
 
 printf "."
+
+## Initialize new WordPress website and remove the default content ##
+sudo -u www wp core install --url=http://127.0.0.1 --title="Dragos Created Website" --admin_user=admin --admin_password=admin --admin_email=dragosonisei@gmail.com &> /dev/null
+sudo -u www wp site empty --yes &> /dev/null
+
+printf " .. ${GREEN}Done${NC}\n"
 
 ## Restart apache and ensure it's running ##
 service apache24 restart &> /dev/null
