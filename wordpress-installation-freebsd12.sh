@@ -44,8 +44,7 @@ printf "Installing and configuring software:... "
 ## Pre-Install the software required for basic jail stuff ##
 pkg install -y nano &> /dev/null
 pkg install -y mod_php80 php80-mysqli php80-tokenizer php80-zlib php80-zip php80 rsync php80-gd curl php80-curl php80-xml php80-bcmath php80-mbstring php80-pecl-imagick php80-pecl-imagick-im7 php80-iconv php80-filter php80-pecl-json_post php80-pear-Services_JSON php80-exif php80-fileinfo php80-dom php80-session php80-ctype php80-simplexml php80-phar php80-gmp &> /dev/null
-
-pkg install -y apache24 mariadb105-server mariadb105-client
+pkg install -y apache24 mariadb103-server mariadb103-client
 sysrc apache24_enable=yes mysql_enable=yes &> /dev/null
 service apache24 start &> /dev/null
 
@@ -62,7 +61,7 @@ figlet GATEWAY - IT > /etc/motd
 service motd restart &> /dev/null
 
 ## Up to 12 Oct 2020 the newest version of working MariaDB of FreeBSD was 10.3, that's why it is used here. ##
-pkg install -y apache24 mariadb105-server mariadb105-client &> /dev/null
+pkg install -y apache24 mariadb103-server mariadb103-client &> /dev/null
 
 printf "."
 
