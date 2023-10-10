@@ -60,9 +60,6 @@ printf "."
 figlet GATEWAY - IT > /etc/motd
 service motd restart &> /dev/null
 
-## Up to 12 Oct 2020 the newest version of working MariaDB of FreeBSD was 10.3, that's why it is used here. ##
-pkg install -y apache24 mariadb106-server mariadb106-client &> /dev/null
-
 printf "."
 
 ## Enable and start the services ##
