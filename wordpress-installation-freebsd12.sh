@@ -4,90 +4,105 @@ printf "\n"
 
 ## Set the colors ##
 NC='\033[0m'
+BLACK='\033[0;30m'
+RED='\033[0;31m'
 GREEN='\033[0;32m'
+BROWN_ORANGE='\033[0;33m'
+BLUE='\033[0;34m'
+PURPLE='\033[0;35m'
 CYAN='\033[0;36m'
+LIGHTGRAY='\033[0;37m'
+DARKGRAY='\033[1;30m'
+LIGHTRED='\033[1;31m'
+LIGHTGREEN='\033[1;32m'
+YELLOW='\033[1;33m'
+LIGHTBLUE='\033[1;34m'
+LIGHTPURPLE='\033[1;35m'
+LIGHTCYAN='\033[1;36m'
+WHITE='\033[1;37m'
 
-if [[ $USER != root ]]; then
-    printf "You must run this script as root.\n"
+if [[ $USER = root ]]; then
+    printf "You ${GREEN}passed the root user check${NC}, all good.\n"
+else
+    printf "You are not root!!! Log in as root, please.\n"
     exit
 fi
 
-if [[ $SHELL != $(which bash) ]]; then
-    printf "Bash is not the default shell. Changing the default shell to bash...\n"
-    chsh -s $(which bash) root
-    printf "Please re-login and run the script again.\n"
+if [[ ${SHELL} != $(which bash) ]] || [[ ${SHELL} != /usr/local/bin/bash ]] || [[ ${SHELL} != /bin/bash ]]; then
+    printf "This is not bash! Installing and setting bash as your default shell, re-login and start the script again.\n"
+    pkg install -y bash &> /dev/null
+    chsh -s bash root
     exit
 fi
 
-printf "Installing and configuring software...\n"
+printf "\n"
+printf "Installing and configuring software:... "
 
-## Install required packages ##
-pkg install -y nano mod_php80 php80-mysqli php80-tokenizer php80-zlib php80-zip php80 rsync php80-gd curl php80-curl php80-xml php80-bcmath php80-mbstring php80-pecl-imagick php80-pecl-imagick-im7 php80-iconv php80-filter php80-pecl-json_post php80-pear-Services_JSON php80-exif php80-fileinfo php80-dom php80-session php80-ctype php80-simplexml php80-phar php80-gmp apache24 mariadb106-server mariadb106-client &> /dev/null
+## Pre-Install the software required for basic jail stuff ##
+pkg install -y nano &> /dev/null
+pkg install -y mod_php80 php80-mysqli php80-tokenizer php80-zlib php80-zip php80 rsync php80-gd curl php80-curl php80-xml php80-bcmath php80-mbstring php80-pecl-imagick php80-pecl-imagick-im7 php80-iconv php80-filter php80-pecl-json_post php80-pear-Services_JSON php80-exif php80-fileinfo php80-dom php80-session php80-ctype php80-simplexml php80-phar php80-gmp &> /dev/null
+pkg install -y apache24 mariadb106-server mariadb106-client &> /dev/null
 
-## Enable and start Apache and MariaDB ##
+# Enable and start Apache and MariaDB
 sysrc apache24_enable=yes mysql_enable=yes &> /dev/null
 service apache24 start &> /dev/null
 service mysql-server start &> /dev/null
 
-## Secure the MariaDB install ##
-mysql_secure_installation <<EOF_MYSQL_SECURE
-n
-y
-y
-y
-y
-EOF_MYSQL_SECURE
+printf "${GREEN}Done${NC}\n"
+printf "Downloading WordPress, WP-CLI, and populating default config files: "
 
-## Generate database and user credentials ##
-DB_ROOT_PASSWORD=$(pwgen $(jot -r 1 43 51) 1)
-DB_WPDB_NAME=wpdb_$(pwgen $(jot -r 1 3 5) 1 --no-numerals --no-capitalize)
-DB_WPDB_USER=wpdbuser_$(pwgen $(jot -r 1 4 6) 1 --no-numerals --no-capitalize)
-DB_WPDB_USER_PASSWORD=$(pwgen $(jot -r 1 43 53) 1)
+## Download and install wp-cli ##
+cd /root/
+curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar &> /dev/null
+chmod +x wp-cli.phar
+mv wp-cli.phar /usr/local/bin/wp
 
-## Create WordPress database and assign a new user to it ##
-mysql -e "CREATE DATABASE ${DB_WPDB_NAME}; CREATE USER '${DB_WPDB_USER}'@localhost IDENTIFIED BY '${DB_WPDB_USER_PASSWORD}'; GRANT ALL PRIVILEGES ON ${DB_WPDB_NAME}.* TO ${DB_WPDB_USER}@'localhost'; FLUSH PRIVILEGES;"
-
-## Download and install WordPress ##
-if [[ ! -f /tmp/latest.tar.gz ]]; then
-    curl -s https://wordpress.org/latest.tar.gz -o /tmp/latest.tar.gz -Y 10000 -y 10
+## Download the latest version of WordPress ##
+cd /usr/local/www/apache24/data/
+if [[ ! -f latest.tar.gz ]]; then
+    curl -s https://wordpress.org/latest.tar.gz -o latest.tar.gz
+    tar xf latest.tar.gz --strip-components=1
+    rm latest.tar.gz
 fi
 
-tar xf /tmp/latest.tar.gz -C /usr/local/www/apache24/data --strip-components=1
-chown -R www:www /usr/local/www/apache24/data
+printf "${GREEN}Done${NC}\n"
+printf "Initializing the WordPress installation and removing the default trash: "
 
-## Generate unique salts for wp-config.php ##
-WP_SALTS=$(curl -s https://api.wordpress.org/secret-key/1.1/salt/)
+## Create wp-config.php ##
+# Generate unique salts for wp-config.php
+WP_SALTS=$(wp core secret-key)
 
-## Create wp-config.php from template ##
-cat <<EOF > /usr/local/www/apache24/data/wp-config.php
-<?php
-define( 'DB_NAME', '${DB_WPDB_NAME}' );
-define( 'DB_USER', '${DB_WPDB_USER}' );
-define( 'DB_PASSWORD', '${DB_WPDB_USER_PASSWORD}' );
-define( 'DB_HOST', 'localhost' );
-define( 'DB_CHARSET', 'utf8' );
-define( 'DB_COLLATE', '' );
-${WP_SALTS}
-\$table_prefix = 'wp_';
+# Generate database and user credentials
+DB_ROOT_PASSWORD=$(pwgen $(( RANDOM%7+8 )) 1)
+DB_WPDB_NAME="wpdb_$(pwgen $(( RANDOM%2+3 )) 1 --no-numerals --no-capitalize)"
+DB_WPDB_USER="wpdbuser_$(pwgen $(( RANDOM%2+3 )) 1 --no-numerals --no-capitalize)"
+DB_WPDB_USER_PASSWORD=$(pwgen $(( RANDOM%7+8 )) 1)
+
+wp core config --dbname=$DB_WPDB_NAME --dbuser=$DB_WPDB_USER --dbpass=$DB_WPDB_USER_PASSWORD --dbhost=localhost --dbcharset=utf8 --extra-php <<PHP
 define( 'WP_DEBUG', false );
-if ( ! defined( 'ABSPATH' ) ) {
-    define( 'ABSPATH', dirname( __FILE__ ) . '/' );
-}
-require_once( ABSPATH . 'wp-settings.php' );
-EOF
+\$table_prefix = 'wp_';
 
-chown www:www /usr/local/www/apache24/data/wp-config.php
+${WP_SALTS}
+PHP
 
-## Restart Apache ##
-service apache24 restart &> /dev/null
+chown -R www:www /usr/local/www/apache24/data/
 
-## Get server IP address ##
-IP_ADDRESS=$(ifconfig | awk '/inet /{print $2}' | grep -E '^192|^10|^172' | head -n 1)
+## Install WordPress ##
+wp core install --url=http://localhost --title="My Website" --admin_user=admin --admin_password=admin --admin_email=admin@example.com
 
-## Print installation summary ##
+## Clean up ##
+wp post delete 1 --force # Delete default 'Hello World!' post
+wp plugin delete hello akismet --allow-root # Delete default plugins
+
+printf "${GREEN}Done${NC}\n"
+
+# Code to print installation summary
+
+IP=$(ifconfig | awk '/inet /{print $2}' | grep -E '^192|^10|^172' | head -n 1)
+
 printf "\n"
 printf "WordPress installation completed.\n"
-printf "Website URL: ${CYAN}http://${IP_ADDRESS}/wp-admin/${NC}\n"
+printf "Website URL: ${CYAN}http://${IP}/wp-admin/${NC}\n"
 printf "Admin username: ${CYAN}admin${NC}\n"
 printf "Admin password: ${CYAN}admin${NC}\n"
 printf "MySQL/MariaDB root password: ${CYAN}${DB_ROOT_PASSWORD}${NC}\n"
