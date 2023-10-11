@@ -1,4 +1,6 @@
-Yet another, another bash script to automate WordPress installation for FreeBSD.
+Yet another, another, another bash script to automate WordPress installation for FreeBSD.
+
+*All thanks to yaroslav-gwit/HosterJailedSoftware
 
 Script was tested on the following FreeBSD releases: 12.3. Please let me know if you tried any other release and it worked.
 
