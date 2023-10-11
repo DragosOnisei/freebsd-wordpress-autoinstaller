@@ -1,51 +1,53 @@
 #!/usr/local/bin/bash
 
-# Set the colors
+printf "\n"
+
+## Set the colors ##
 NC='\033[0m'
 GREEN='\033[0;32m'
 CYAN='\033[0;36m'
 
-# Check if the script is executed as root
-if [[ $EUID -ne 0 ]]; then
-    printf "You must be root to run this script.\n"
-    exit 1
+if [[ $USER != root ]]; then
+    printf "You must run this script as root.\n"
+    exit
 fi
 
-# Check if bash is the default shell
-if [[ ${SHELL} != $(which bash) ]]; then
+if [[ $SHELL != $(which bash) ]]; then
     printf "Bash is not the default shell. Changing the default shell to bash...\n"
     chsh -s $(which bash) root
     printf "Please re-login and run the script again.\n"
-    exit 1
+    exit
 fi
 
-printf "Installing required packages...\n"
+printf "Installing and configuring software...\n"
 
-# Install required packages
+## Install required packages ##
 pkg install -y nano mod_php80 php80-mysqli php80-tokenizer php80-zlib php80-zip php80 rsync php80-gd curl php80-curl php80-xml php80-bcmath php80-mbstring php80-pecl-imagick php80-pecl-imagick-im7 php80-iconv php80-filter php80-pecl-json_post php80-pear-Services_JSON php80-exif php80-fileinfo php80-dom php80-session php80-ctype php80-simplexml php80-phar php80-gmp apache24 mariadb106-server mariadb106-client &> /dev/null
 
-# Enable and start Apache
+## Enable and start Apache and MariaDB ##
 sysrc apache24_enable=yes mysql_enable=yes &> /dev/null
 service apache24 start &> /dev/null
+service mysql-server start &> /dev/null
 
-# Secure the MariaDB install
-mysql <<EOF_MYSQL_SECURE
-UPDATE mysql.user SET Password=PASSWORD('') WHERE User='root';
-DELETE FROM mysql.user WHERE User='';
-DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1');
-FLUSH PRIVILEGES;
+## Secure the MariaDB install ##
+mysql_secure_installation <<EOF_MYSQL_SECURE
+n
+y
+y
+y
+y
 EOF_MYSQL_SECURE
 
-# Generate database and user credentials
-DB_ROOT_PASSWORD=$(pwgen -s 43 1)
-DB_WPDB_NAME=wpdb_$(pwgen -A -0 4 1)
-DB_WPDB_USER=wpdbuser_$(pwgen -A -0 5 1)
-DB_WPDB_USER_PASSWORD=$(pwgen -s 43 1)
+## Generate database and user credentials ##
+DB_ROOT_PASSWORD=$(pwgen $(jot -r 1 43 51) 1)
+DB_WPDB_NAME=wpdb_$(pwgen $(jot -r 1 3 5) 1 --no-numerals --no-capitalize)
+DB_WPDB_USER=wpdbuser_$(pwgen $(jot -r 1 4 6) 1 --no-numerals --no-capitalize)
+DB_WPDB_USER_PASSWORD=$(pwgen $(jot -r 1 43 53) 1)
 
-# Create WordPress database and assign a new user to it
+## Create WordPress database and assign a new user to it ##
 mysql -e "CREATE DATABASE ${DB_WPDB_NAME}; CREATE USER '${DB_WPDB_USER}'@localhost IDENTIFIED BY '${DB_WPDB_USER_PASSWORD}'; GRANT ALL PRIVILEGES ON ${DB_WPDB_NAME}.* TO ${DB_WPDB_USER}@'localhost'; FLUSH PRIVILEGES;"
 
-# Download and install WordPress
+## Download and install WordPress ##
 if [[ ! -f /tmp/latest.tar.gz ]]; then
     curl -s https://wordpress.org/latest.tar.gz -o /tmp/latest.tar.gz -Y 10000 -y 10
 fi
@@ -53,10 +55,10 @@ fi
 tar xf /tmp/latest.tar.gz -C /usr/local/www/apache24/data --strip-components=1
 chown -R www:www /usr/local/www/apache24/data
 
-# Generate unique salts for wp-config.php
+## Generate unique salts for wp-config.php ##
 WP_SALTS=$(curl -s https://api.wordpress.org/secret-key/1.1/salt/)
 
-# Create wp-config.php from template
+## Create wp-config.php from template ##
 cat <<EOF > /usr/local/www/apache24/data/wp-config.php
 <?php
 define( 'DB_NAME', '${DB_WPDB_NAME}' );
@@ -76,13 +78,13 @@ EOF
 
 chown www:www /usr/local/www/apache24/data/wp-config.php
 
-# Restart Apache
+## Restart Apache ##
 service apache24 restart &> /dev/null
 
-# Get server IP address
+## Get server IP address ##
 IP_ADDRESS=$(ifconfig | awk '/inet /{print $2}' | grep -E '^192|^10|^172' | head -n 1)
 
-# Print installation summary
+## Print installation summary ##
 printf "\n"
 printf "WordPress installation completed.\n"
 printf "Website URL: ${CYAN}http://${IP_ADDRESS}/wp-admin/${NC}\n"
