@@ -19,7 +19,7 @@ if [[ ${SHELL} != $(which bash) ]]; then
     exit 1
 fi
 
-printf "Installing and configuring software...\n"
+printf "Installing required packages...\n"
 
 # Install required packages
 pkg install -y nano mod_php80 php80-mysqli php80-tokenizer php80-zlib php80-zip php80 rsync php80-gd curl php80-curl php80-xml php80-bcmath php80-mbstring php80-pecl-imagick php80-pecl-imagick-im7 php80-iconv php80-filter php80-pecl-json_post php80-pear-Services_JSON php80-exif php80-fileinfo php80-dom php80-session php80-ctype php80-simplexml php80-phar php80-gmp apache24 mariadb106-server mariadb106-client &> /dev/null
@@ -29,22 +29,18 @@ sysrc apache24_enable=yes mysql_enable=yes &> /dev/null
 service apache24 start &> /dev/null
 
 # Secure the MariaDB install
-mysql_secure_installation <<EOF_MYSQL_SECURE
-n
-y
-y
-y
-y
+mysql <<EOF_MYSQL_SECURE
+UPDATE mysql.user SET Password=PASSWORD('') WHERE User='root';
+DELETE FROM mysql.user WHERE User='';
+DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1');
+FLUSH PRIVILEGES;
 EOF_MYSQL_SECURE
 
 # Generate database and user credentials
-DB_ROOT_PASSWORD=$(pwgen $(jot -r 1 43 51) 1)
-DB_WPDB_NAME=wpdb_$(pwgen $(jot -r 1 3 5) 1 --no-numerals --no-capitalize)
-DB_WPDB_USER=wpdbuser_$(pwgen $(jot -r 1 4 6) 1 --no-numerals --no-capitalize)
-DB_WPDB_USER_PASSWORD=$(pwgen $(jot -r 1 43 53) 1)
-
-# Set database root password
-mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '${DB_ROOT_PASSWORD}'; FLUSH PRIVILEGES;"
+DB_ROOT_PASSWORD=$(pwgen -s 43 1)
+DB_WPDB_NAME=wpdb_$(pwgen -A -0 4 1)
+DB_WPDB_USER=wpdbuser_$(pwgen -A -0 5 1)
+DB_WPDB_USER_PASSWORD=$(pwgen -s 43 1)
 
 # Create WordPress database and assign a new user to it
 mysql -e "CREATE DATABASE ${DB_WPDB_NAME}; CREATE USER '${DB_WPDB_USER}'@localhost IDENTIFIED BY '${DB_WPDB_USER_PASSWORD}'; GRANT ALL PRIVILEGES ON ${DB_WPDB_NAME}.* TO ${DB_WPDB_USER}@'localhost'; FLUSH PRIVILEGES;"
