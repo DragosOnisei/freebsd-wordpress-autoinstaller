@@ -1,4 +1,4 @@
-WORKING FreeBDS SCRIPT  #!/usr/local/bin/bash
+#!/usr/local/bin/bash
 
 printf "\n"
 
@@ -21,6 +21,7 @@ LIGHTPURPLE='\033[1;35m'
 LIGHTCYAN='\033[1;36m'
 WHITE='\033[1;37m'
 
+
 if [[ $USER = root ]]; then
     printf "You ${GREEN}passed the root user check${NC}, all good.\n"
 else
@@ -29,8 +30,7 @@ else
 fi
 
 if [[ ${SHELL} = $(which bash) ]] || [[ ${SHELL} = /usr/local/bin/bash ]] || [[ ${SHELL} = /bin/bash ]]; then
-	printf "bash is a sane choise of shell, ${GREEN}proceeding with the install${NC}.\n"
-
+    printf "bash is a sane choise of shell, ${GREEN}proceeding with the install${NC}.\n"
 else
     printf "This is not bash! Installing and setting bash as your default shell, re-login and start the script again.\n"
     pkg install -y bash &> /dev/null
@@ -38,16 +38,9 @@ else
     exit
 fi
 
+
 printf "\n"
-printf "Installing and configuring software:... "
-
-## Pre-Install the software required for basic jail stuff ##
-pkg install -y nano &> /dev/null
-pkg install -y mod_php80 php80-mysqli php80-tokenizer php80-zlib php80-zip php80 rsync php80-gd curl php80-curl php80-xml php80-bcmath php80-mbstring php80-pecl-imagick php80-pecl-imagick-im7 php80-iconv php80-filter php80-pecl-json_post php80-pear-Services_JSON php80-exif php80-fileinfo php80-dom php80-session php80-ctype php80-simplexml php80-phar php80-gmp &> /dev/null
-pkg install -y apache24 mariadb106-server mariadb106-client
-sysrc apache24_enable=yes mysql_enable=yes &> /dev/null
-service apache24 start &> /dev/null
-
+printf "Installing and configuring software: "
 
 ## Install the software required for basic jail stuff ##
 pkg update -fq &> /dev/null
@@ -56,12 +49,16 @@ pkg install -y nano htop bmon iftop pwgen sudo figlet &> /dev/null
 
 printf "."
 
+## Pre-Install the software required for basic jail stuff ##
+pkg install -y apache24 mariadb106-server mariadb106-client &> /dev/null  ## Up to 12 Oct 2020 the newest version of working MariaDB of FreeBSD was 10.3, that's why it is used here
+pkg install -y mod_php80 php80-mysqli php80-tokenizer php80-zlib php80-zip php80 rsync php80-gd curl php80-curl php80-xml php80-bcmath php80-mbstring php80-pecl-imagick php80-pecl-imagick php80-iconv php80-filter php80-pecl-json_post php80-pear-Services_JSON php80-exif php80-fileinfo php80-dom php80-session php80-ctype php80-simplexml php80-phar php80-gmp &> /dev/null
+
+printf "."
+
 ## Set the correct banner ##
-figlet GATEWAY - IT > /etc/motd
+figlet 'DragosOnisei' > /etc/motd
 service motd restart &> /dev/null
 
-## Up to 12 Oct 2020 the newest version of working MariaDB of FreeBSD was 10.3, that's why it is used here. ##
-pkg install -y apache24 mariadb106-server mariadb106-client &> /dev/null
 
 printf "."
 
@@ -73,11 +70,6 @@ service mysql-server start &> /dev/null
 #### Create if check to perform health check on MariaDB server and Apache24 ####
 
 ## Generate all of the random values/secrets that are required in the setup ##
-#DB_ROOT_PASSWORD=$(makepasswd --minchars 43 --maxchars 51)
-#DB_WPDB_NAME=wpdb_$(makepasswd --minchars 3 --maxchars 5 --string=qwertyuiopasdfghjklzxcvbnm)
-#DB_WPDB_USER=wpdbuser_$(makepasswd --minchars 4 --maxchars 6 --string=qwertyuiopasdfghjklzxcvbnm)
-#DB_WPDB_USER_PASSWORD=$(makepasswd --minchars 43 --maxchars 53)
-
 DB_ROOT_PASSWORD=$(pwgen $(echo $(( $RANDOM % 11 + 51 ))) 1)
 DB_WPDB_NAME=wpdb_$(pwgen $(echo $(( $RANDOM % 1 + 3 ))) 1 --no-numerals --no-capitalize)
 DB_WPDB_USER=wpdbuser_$(pwgen $(echo $(( $RANDOM % 1 + 3 ))) 1 --no-numerals --no-capitalize)
@@ -125,9 +117,9 @@ cat <<'EOF_ENABLEPHPFILES' | cat > /usr/local/etc/apache24/Includes/php.conf
 </IfModule>
 EOF_ENABLEPHPFILES
 
-printf "."
-
+printf ". "
 printf "${GREEN}Done${NC}\n"
+
 printf "Downloading WordPress, WP-CLI and populating default config files: "
 
 ## Download and install wp-cli ##
@@ -314,7 +306,7 @@ tar xf /tmp/local.tar.gz
 
 printf "."
 
-rm /usr/local/www/apache24/data/index.html
+rm -f /usr/local/www/apache24/data/index.html
 
 cp -r /tmp/wordpress/* /usr/local/www/apache24/data/
 chown -R www:www /usr/local/www/apache24/data/
@@ -343,14 +335,6 @@ WP_SALT6=$(pwgen 55 1 --secure)
 WP_SALT7=$(pwgen 55 1 --secure)
 WP_SALT8=$(pwgen 55 1 --secure)
 
-#WP_SALT1=$(makepasswd --chars 55 --string=qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM{}*%^@[])
-#WP_SALT2=$(makepasswd --chars 55 --string=qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM{}*%^@[])
-#WP_SALT3=$(makepasswd --chars 55 --string=qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM{}*%^@[])
-#WP_SALT4=$(makepasswd --chars 55 --string=qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM{}*%^@[])
-#WP_SALT5=$(makepasswd --chars 55 --string=qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM{}*%^@[])
-#WP_SALT6=$(makepasswd --chars 55 --string=qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM{}*%^@[])
-#WP_SALT7=$(makepasswd --chars 55 --string=qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM{}*%^@[])
-#WP_SALT8=$(makepasswd --chars 55 --string=qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM{}*%^@[])
 
 cat << 'EOF_WPCONFIG' | cat > /usr/local/www/apache24/data/wp-config.php
 <?php
@@ -384,7 +368,7 @@ define( 'DB_USER', 'username_here' );
 define( 'DB_PASSWORD', 'password_here' );
 
 /** MySQL hostname */
-define( 'DB_HOST', 'localhost' );
+define( 'DB_HOST', '127.0.0.1' );
 
 /** Database Charset to use in creating database tables. */
 define( 'DB_CHARSET', 'utf8' );
@@ -470,17 +454,9 @@ sed -i '' "/$table_prefix =/s/'wp_'/'${WP_DB_PREFIX}_'/" /usr/local/www/apache24
 printf ". "
 
 printf "${GREEN}Done${NC}\n"
-printf "Initializing the WordPress installation and removing the default trash: "
+printf "Initializing the WordPress installation and removing the default trash:"
 
 ## Initialize new WordPress website with WP-CLI, nuke default stuff ##
-#WP_CLI_USERNAME=defadm_$(makepasswd --chars 7 --string=qwertyuiopasdfghjklzxcvbnm)
-#WP_CLI_USER_PASSWORD=$(makepasswd --minchars 43 --maxchars 51)
-#WP_CLI_USER_EMAIL=$(makepasswd --minchars 3 --maxchars 7 --string=qwertyuiopasdfghjklzxcvbnm)@nonexistentdomain.net
-
-#WP_CLI_USERNAME=defadm_$(pwgen $(echo $(( $RANDOM % 2 + 3 ))) 1 --no-capitalize --no-numerals)
-#WP_CLI_USER_PASSWORD=$(pwgen $(echo $(( $RANDOM % 11 + 51 ))) 1 --secure)
-#WP_CLI_USER_EMAIL=$(pwgen $(echo $(( $RANDOM % 2 + 3 ))) 1 --no-capitalize --no-numerals)@nonexistentdomain.net
-
 WP_CLI_USERNAME=admin
 WP_CLI_USER_PASSWORD=admin
 WP_CLI_USER_EMAIL=dragosonisei@gmail.com
@@ -495,7 +471,6 @@ EOF_WPCLIYML
 
 chown -R www /home/www
 pw usermod www -d /home/www
-#sed -i '' "/World Wide Web Owner/s/\/nonexistent/\/home\/www/" /etc/master.passwd
 
 sudo -u www wp core install --url=127.0.0.1 --title="Dragos Created Website" --admin_user=$WP_CLI_USERNAME --admin_password=$WP_CLI_USER_PASSWORD --admin_email=${WP_CLI_USER_EMAIL} &> /dev/null
 sudo -u www wp rewrite structure '/%postname%/' --hard &> /dev/null
@@ -506,7 +481,7 @@ sudo -u www wp theme delete twentyseventeen twentynineteen twentytwenty &> /dev/
 printf " ..... ${GREEN}Done${NC}\n"
 
 ## Note with all credentials for later use ##
-printf "Writing down all passwords to ${GREEN}wordpress-creds.txt${NC}: "
+printf "Writing down all passwords to ${GREEN}wordpress-creds.txt${NC}:"
 
 echo "## Wordpress Web GUI username and password ##" >> /root/wordpress-creds.txt
 echo "WP_GUI_USERNAME" - $WP_CLI_USERNAME >> /root/wordpress-creds.txt
@@ -531,8 +506,6 @@ IPADDR=$(ifconfig | grep "192\|10\|172" | awk '{print $2}' | awk '/^192|^10|^172
 
 ##Choose one option, and just comment out second: top - public cloud install, bottom private cloud install. ##
 #### IN THE FUTURE I WILL ADD A FLAG TO CHOOSE THIS BEFORE INSTALL ####
-#printf "The installation is now finished. Go to ${CYAN}https://${IPADDR}${NC} or \
-#${CYAN}https://$(hostname)${NC} or ${CYAN}https://$(curl -s ifconfig.me)${NC} to configure your new site. \n"
 
 printf "The installation is now finished. In case you forgot, this VM IP is: ${CYAN}${IPADDR}${NC}\n"
 printf "Go to ${CYAN}http://${IPADDR}/wp-admin/${NC} if you'd like to configure or test your new WordPress website.\n"
