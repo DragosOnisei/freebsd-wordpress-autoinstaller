@@ -56,7 +56,7 @@ pkg install -y mod_php80 php80-mysqli php80-tokenizer php80-zlib php80-zip php80
 printf "."
 
 ## Set the correct banner ##
-figlet 'DragosOnisei' > /etc/motd
+figlet 'DragosOnisei' &> /etc/motd
 service motd restart &> /dev/null
 
 
