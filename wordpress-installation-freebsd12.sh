@@ -45,27 +45,26 @@ printf "Installing and configuring software: "
 ## Install the software required for basic jail stuff ##
 pkg update -fq &> /dev/null
 pkg upgrade -y &> /dev/null
-pkg install -y nano htop bmon iftop pwgen sudo figlet &> /dev/null
+pkg install -y nano htop bmon iftop sudo figlet &>/dev/null
 
 printf "."
 
-## Pre-Install the software required for basic jail stuff ##
-pkg install -y apache24 mariadb106-server mariadb106-client &> /dev/null  ## Up to 12 Oct 2020 the newest version of working MariaDB of FreeBSD was 10.3, that's why it is used here
-pkg install -y mod_php80 php80-mysqli php80-tokenizer php80-zlib php80-zip php80 rsync php80-gd curl php80-curl php80-xml php80-bcmath php80-mbstring php80-pecl-imagick php80-pecl-imagick php80-iconv php80-filter php80-pecl-json_post php80-pear-Services_JSON php80-exif php80-fileinfo php80-dom php80-session php80-ctype php80-simplexml php80-phar php80-gmp &> /dev/null
-
-printf "."
 
 ## Set the correct banner ##
 figlet 'DragosOnisei' &> /etc/motd
 service motd restart &> /dev/null
 
+## Up to 12 Oct 2020 the newest version of working MariaDB of FreeBSD was 10.3, that's why it is used here. ##
+pkg install -y apache24 mariadb106-server mariadb106-client &>/dev/null
 
 printf "."
 
 ## Enable and start the services ##
-sysrc apache24_enable=yes mysql_enable=yes &> /dev/null
-service apache24 start &> /dev/null
-service mysql-server start &> /dev/null
+# sysrc apache24_enable=yes mysql_enable=yes &>/dev/null
+(service apache24 enable || true) &>/dev/null
+(service apache24 start || true) &>/dev/null
+(service mysql-server enable || true) &>/dev/null
+(service mysql-server start || true) &>/dev/null
 
 #### Create if check to perform health check on MariaDB server and Apache24 ####
 
@@ -76,7 +75,7 @@ DB_WPDB_USER=wpdbuser_$(pwgen $(echo $(( $RANDOM % 1 + 3 ))) 1 --no-numerals --n
 DB_WPDB_USER_PASSWORD=$(pwgen $(echo $(( $RANDOM % 11 + 51 ))) 1)
 
 ## Secure the MariaDB install ##
-mysql_secure_installation <<EOF_MSQLSI &> /dev/null
+mysql_secure_installation <<EOF_MSQLSI &>/dev/null
 
 n
 y
@@ -85,27 +84,54 @@ y
 y
 EOF_MSQLSI
 
-mysql << EOF_SETROOTPASS
+mysql <<EOF_SET_ROOT_PASS
 SET PASSWORD FOR 'root'@'localhost' = PASSWORD('${DB_ROOT_PASSWORD}');
 FLUSH PRIVILEGES;
-EOF_SETROOTPASS
+EOF_SET_ROOT_PASS
 
 #### Create check if password lockdown worked, if not, kill the process ####
 
 ## Create wordpress database and assign a new user to it ##
-mysql -uroot -p${DB_ROOT_PASSWORD} << EOF_WPDATABASE
+mysql -uroot -p"${DB_ROOT_PASSWORD}" <<EOF_WP_DATABASE
 CREATE DATABASE ${DB_WPDB_NAME};
 CREATE USER '${DB_WPDB_USER}'@localhost IDENTIFIED BY '${DB_WPDB_USER_PASSWORD}';
 GRANT ALL PRIVILEGES ON ${DB_WPDB_NAME}.* TO ${DB_WPDB_USER}@'localhost';
 FLUSH PRIVILEGES;
-EOF_WPDATABASE
+EOF_WP_DATABASE
 
-
+# Install the required PHP modules
+pkg install -y rsync curl &>/dev/null
+pkg install -y php81 mod_php81 &>/dev/null
+(pkg install -y php81-mysqli || true) &>/dev/null
+(pkg install -y php81-tokenizer || true) &>/dev/null
+(pkg install -y php81-zlib || true) &>/dev/null
 printf "."
+(pkg install -y php81-zip || true) &>/dev/null
+(pkg install -y php81-gd || true) &>/dev/null
+(pkg install -y php81-curl || true) &>/dev/null
+(pkg install -y php81-xml || true) &>/dev/null
+printf "."
+(pkg install -y php81-intl || true) &>/dev/null
+(pkg install -y php81-bcmath || true) &>/dev/null
+(pkg install -y php81-mbstring || true) &>/dev/null
+(pkg install -y php81-pecl-imagick || true) &>/dev/null
+printf "."
+(pkg install -y php81-iconv || true) &>/dev/null
+(pkg install -y php81-filter || true) &>/dev/null
+(pkg install -y php81-pear-Services_JSON || true) &>/dev/null
+(pkg install -y php81-exif || true) &>/dev/null
+printf "."
+(pkg install -y php81-fileinfo || true) &>/dev/null
+(pkg install -y php81-session || true) &>/dev/null
+(pkg install -y php81-ctype || true) &>/dev/null
+(pkg install -y php81-simplexml || true) &>/dev/null
+printf "."
+(pkg install -y php81-phar || true) &>/dev/null
+(pkg install -y php81-gmp || true) &>/dev/null
+(pkg install -y php81-dom || true) &>/dev/null
 
 cp /usr/local/etc/php.ini-production /usr/local/etc/php.ini
-
-cat <<'EOF_ENABLEPHPFILES' | cat > /usr/local/etc/apache24/Includes/php.conf
+cat <<'EOF_ENABLE_PHP_FILES' | cat >/usr/local/etc/apache24/Includes/php.conf
 <IfModule dir_module>
     DirectoryIndex index.php index.html
     <FilesMatch "\.php$">
@@ -115,11 +141,13 @@ cat <<'EOF_ENABLEPHPFILES' | cat > /usr/local/etc/apache24/Includes/php.conf
         SetHandler application/x-httpd-php-source
     </FilesMatch>
 </IfModule>
-EOF_ENABLEPHPFILES
+EOF_ENABLE_PHP_FILES
 
 printf ". "
-printf "${GREEN}Done${NC}\n"
 
+
+# shellcheck disable=SC2059
+printf "${GREEN}Done${NC}\n"
 printf "Downloading WordPress, WP-CLI and populating default config files: "
 
 ## Download and install wp-cli ##
@@ -286,6 +314,7 @@ elif [[ ! -f /tmp/local.tar.gz ]] && [[ ! -f local2.tar.gz ]]; then
     exit
 fi
 
+# shellcheck disable=SC2010
 while [[ $(ls -al /tmp/ | grep "local.tar.gz" | awk '{print $5}') -ne $(ls -al /tmp/ | grep "local2.tar.gz" | awk '{print $5}') ]]; do
 	sleep 20
 	if [[ $(ls -al /tmp/ | grep "local.tar.gz" | awk '{print $5}') -ne $(ls -al /tmp/ | grep "local2.tar.gz" | awk '{print $5}') ]]; then
@@ -306,21 +335,21 @@ tar xf /tmp/local.tar.gz
 
 printf "."
 
-rm -f /usr/local/www/apache24/data/index.html
-
+rm /usr/local/www/apache24/data/index.html
 cp -r /tmp/wordpress/* /usr/local/www/apache24/data/
 chown -R www:www /usr/local/www/apache24/data/
 
-## .htaccess file + some php.ini configuration settings inside it ##
-touch /usr/local/www/apache24/data/.htaccess &> /dev/null
+# .htaccess file + some php.ini configuration settings inside it
+touch /usr/local/www/apache24/data/.htaccess &>/dev/null
 chown www:www /usr/local/www/apache24/data/.htaccess
 
-echo "#PHP.INI VALUES" >> /usr/local/www/apache24/data/.htaccess
-echo "php_value upload_max_filesize 500M" >> /usr/local/www/apache24/data/.htaccess
-echo "php_value post_max_size 500M" >> /usr/local/www/apache24/data/.htaccess
-echo "php_value memory_limit 256M" >> /usr/local/www/apache24/data/.htaccess
-echo "php_value max_execution_time 300" >> /usr/local/www/apache24/data/.htaccess
-echo "php_value max_input_time 300" >> /usr/local/www/apache24/data/.htaccess
+# shellcheck disable=SC2129
+echo "#PHP.INI VALUES" >>/usr/local/www/apache24/data/.htaccess
+echo "php_value upload_max_filesize 500M" >>/usr/local/www/apache24/data/.htaccess
+echo "php_value post_max_size 500M" >>/usr/local/www/apache24/data/.htaccess
+echo "php_value memory_limit 256M" >>/usr/local/www/apache24/data/.htaccess
+echo "php_value max_execution_time 300" >>/usr/local/www/apache24/data/.htaccess
+echo "php_value max_input_time 300" >>/usr/local/www/apache24/data/.htaccess
 
 printf "."
 
@@ -336,7 +365,7 @@ WP_SALT7=$(pwgen 55 1 --secure)
 WP_SALT8=$(pwgen 55 1 --secure)
 
 
-cat << 'EOF_WPCONFIG' | cat > /usr/local/www/apache24/data/wp-config.php
+cat <<'EOF_WP_CONFIG' | cat >/usr/local/www/apache24/data/wp-config.php
 <?php
 /**
  * The base configuration for WordPress
@@ -483,18 +512,20 @@ printf " ..... ${GREEN}Done${NC}\n"
 ## Note with all credentials for later use ##
 printf "Writing down all passwords to ${GREEN}wordpress-creds.txt${NC}:"
 
-echo "## Wordpress Web GUI username and password ##" >> /root/wordpress-creds.txt
-echo "WP_GUI_USERNAME" - $WP_CLI_USERNAME >> /root/wordpress-creds.txt
-echo "WP_GUI_USER_PASSWORD" - $WP_CLI_USER_PASSWORD >> /root/wordpress-creds.txt
-echo   >> /root/wordpress-creds.txt
-echo "## Mysql/MariaDB root password ##" >> /root/wordpress-creds.txt
-echo "DB_ROOT_PASSWORD" - $DB_ROOT_PASSWORD >> /root/wordpress-creds.txt
-echo   >> /root/wordpress-creds.txt
-echo "## Wordpress DB name, DB user, DB user's password ##" >> /root/wordpress-creds.txt
-echo "DB_WPDB_NAME" - $DB_WPDB_NAME >> /root/wordpress-creds.txt
-echo "DB_WPDB_USER" - $DB_WPDB_USER >> /root/wordpress-creds.txt
-echo "DB_WPDB_USER_PASSWORD" - $DB_WPDB_USER_PASSWORD >> /root/wordpress-creds.txt
+# shellcheck disable=SC2129
+echo "## Wordpress Web GUI username and password ##" >>/root/wordpress-creds.txt
+echo "WP_GUI_USERNAME" - "$WP_CLI_USERNAME" >>/root/wordpress-creds.txt
+echo "WP_GUI_USER_PASSWORD" - "$WP_CLI_USER_PASSWORD" >>/root/wordpress-creds.txt
+echo >>/root/wordpress-creds.txt
+echo "## Mysql/MariaDB root password ##" >>/root/wordpress-creds.txt
+echo "DB_ROOT_PASSWORD" - "$DB_ROOT_PASSWORD" >>/root/wordpress-creds.txt
+echo >>/root/wordpress-creds.txt
+echo "## Wordpress DB name, DB user, DB user's password ##" >>/root/wordpress-creds.txt
+echo "DB_WPDB_NAME" - "$DB_WPDB_NAME" >>/root/wordpress-creds.txt
+echo "DB_WPDB_USER" - "$DB_WPDB_USER" >>/root/wordpress-creds.txt
+echo "DB_WPDB_USER_PASSWORD" - "$DB_WPDB_USER_PASSWORD" >>/root/wordpress-creds.txt
 
+# shellcheck disable=SC2059
 printf " ..... ${GREEN}Done${NC} \n"
 printf "\n"
 
