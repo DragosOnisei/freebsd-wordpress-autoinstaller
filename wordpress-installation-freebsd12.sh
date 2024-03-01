@@ -21,9 +21,6 @@ CYAN='\033[0;36m'
 # LIGHTCYAN='\033[1;36m'
 # WHITE='\033[1;37m'
 
-# Exit on error
-set -e -u
-
 if [[ $USER = root ]]; then
     # shellcheck disable=SC2059
     printf "You ${GREEN}passed the root user check${NC}, all good.\n"
@@ -51,6 +48,12 @@ pkg upgrade -y &>/dev/null
 pkg install -y nano htop bmon iftop sudo figlet &>/dev/null
 printf "."
 
+## Pre-Install the software required for basic jail stuff ##
+pkg install -y apache24 mariadb106-server mariadb106-client &> /dev/null  ## Up to 12 Oct 2020 the newest version of working MariaDB of FreeBSD was 10.3, that's why it is used here
+pkg install -y mod_php80 php80-mysqli php80-tokenizer php80-zlib php80-zip php80 rsync php80-gd curl php80-curl php80-xml php80-bcmath php80-mbstring php80-pecl-imagick php80-pecl-imagick php80-iconv php80-filter php80-pecl-json_post php80-pear-Services_JSON php80-exif php80-fileinfo php80-dom php80-session php80-ctype php80-simplexml php80-phar php80-gmp &> /dev/null
+
+printf "."
+
 ## Download my own implementation of random password generator
 curl -sS "https://gitlab.gateway-it.com/yaroslav/NimPasswordGenerator/-/raw/main/bin/password_generator_freebsd_x64?ref_type=heads" --output /bin/password_generator
 chmod +x /bin/password_generator
@@ -60,9 +63,6 @@ printf "."
 ## Set the correct banner ##
 figlet 'DragosOnisei' &> /etc/motd
 service motd restart &>/dev/null
-
-## Up to 12 Oct 2020 the newest version of working MariaDB of FreeBSD was 10.3, that's why it is used here. ##
-pkg install -y apache24 mariadb106-server mariadb106-client &>/dev/null
 
 printf "."
 
@@ -97,7 +97,6 @@ SET PASSWORD FOR 'root'@'localhost' = PASSWORD('${DB_ROOT_PASSWORD}');
 FLUSH PRIVILEGES;
 EOF_SET_ROOT_PASS
 
-#### Create check if password lock down worked, if not, kill the process ####
 #### Create check if password lock down worked, if not, kill the process ####
 
 ## Create wordpress database and assign a new user to it ##
@@ -153,9 +152,9 @@ cat <<'EOF_ENABLE_PHP_FILES' | cat >/usr/local/etc/apache24/Includes/php.conf
 EOF_ENABLE_PHP_FILES
 
 printf ". "
-
 # shellcheck disable=SC2059
 printf "${GREEN}Done${NC}\n"
+
 printf "Downloading WordPress, WP-CLI and populating the default config files "
 
 ## Download and install wp-cli ##
@@ -172,7 +171,7 @@ rm /usr/local/etc/apache24/httpd.conf
 
 cat <<'EOF_APACHE_CONFIG' | cat >/usr/local/etc/apache24/httpd.conf
 ServerRoot "/usr/local"
-Listen 443
+Listen 80
 LoadModule mpm_prefork_module libexec/apache24/mod_mpm_prefork.so
 LoadModule authn_file_module libexec/apache24/mod_authn_file.so
 LoadModule authn_core_module libexec/apache24/mod_authn_core.so
