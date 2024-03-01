@@ -152,15 +152,6 @@ cat <<'EOF_ENABLE_PHP_FILES' | cat >/usr/local/etc/apache24/Includes/php.conf
 </IfModule>
 EOF_ENABLE_PHP_FILES
 
-printf "."
-
-## Make a self-signed SSL cert
-mkdir -p /usr/local/www/apache24/ssl/
-openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /usr/local/www/apache24/ssl/self.key -out /usr/local/www/apache24/ssl/self.crt -subj "/C=GB/ST=London/L=London/O=Global Security/OU=Gateway-IT Department/CN=gateway-it.intranet" &>/dev/null
-
-chown www:www /usr/local/www/apache24/ssl/self.key
-chown www:www /usr/local/www/apache24/ssl/self.crt
-
 printf ". "
 
 # shellcheck disable=SC2059
@@ -229,10 +220,6 @@ ServerAdmin random@rdomain.intranet
     AllowOverride None
     Require all denied
 </Directory>
-
-SSLEngine on
-SSLCertificateFile /usr/local/www/apache24/ssl/self.crt
-SSLCertificateKeyFile /usr/local/www/apache24/ssl/self.key
 
 DocumentRoot "/usr/local/www/apache24/data"
 <Directory "/usr/local/www/apache24/data">
@@ -472,18 +459,10 @@ $table_prefix = 'wp_';
 // define('DISABLE_WP_CRON', true);
 define('WP_DEBUG', false);
 
-define('WP_SITEURL', 'https://'.$_SERVER['HTTP_HOST']);
-define('WP_HOME', 'https://'.$_SERVER['HTTP_HOST']);
-define('FORCE_SSL_ADMIN', true);
+define('WP_SITEURL', 'http://'.$_SERVER['HTTP_HOST']);
+define('WP_HOME', 'http://'.$_SERVER['HTTP_HOST']);
 
-if (strpos($_SERVER['HTTP_X_FORWARDED_PROTO'], 'https') !== false)
-$_SERVER['HTTPS']='on';
-
-// If we're behind a proxy server and using HTTPS, we need to alert WordPress of that fact
-// see also http://codex.wordpress.org/Administration_Over_SSL#Using_a_Reverse_Proxy
-if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
-	$_SERVER['HTTPS'] = 'on';
-}
+define( 'WP_CACHE', true );
 
 /* That's all, stop editing! Happy publishing. */
 
