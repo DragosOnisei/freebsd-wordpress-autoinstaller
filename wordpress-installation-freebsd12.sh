@@ -496,8 +496,8 @@ printf "Initializing the WordPress installation and removing the default garbage
 
 ## Initialize new WordPress website with WP-CLI, nuke default stuff ##
 WP_CLI_USERNAME=admin
-WP_CLI_USER_PASSWORD=admin
-WP_CLI_USER_EMAIL=dragosonisei@gmail.com
+WP_CLI_USER_PASSWORD=Admin2024!
+WP_CLI_USER_EMAIL=onisei_dragos@yahoo.com
 
 mkdir -p /home/www/.wp-cli
 touch /home/www/.wp-cli/config.yml
