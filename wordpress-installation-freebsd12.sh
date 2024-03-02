@@ -545,7 +545,7 @@ IPADDR=$(ifconfig | grep "192\|10\|172" | awk '{print $2}' | awk '/^192|^10|^172
 printf "The installation is now finished."
 printf "You can visit the link below to configure or test your new WordPress website.\n"
 # shellcheck disable=SC2059
-printf "${CYAN}https://${IPADDR}/wp-admin/${NC}\n"
+printf "${CYAN}http://${IPADDR}/wp-admin/${NC}\n"
 
 printf "\n"
 
