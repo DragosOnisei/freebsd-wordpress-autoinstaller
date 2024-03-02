@@ -48,8 +48,9 @@ pkg upgrade -y &>/dev/null
 pkg install -y nano htop bmon iftop sudo figlet &>/dev/null
 printf "."
 
-## Up to 12 Oct 2020 the newest version of working MariaDB of FreeBSD was 10.3, that's why it is used here. ##
-pkg install -y apache24 mariadb106-server mariadb106-client &>/dev/null
+## Pre-Install the software required for basic jail stuff ##
+pkg install -y apache24 mariadb106-server mariadb106-client &> /dev/null  ## Up to 12 Oct 2020 the newest version of working MariaDB of FreeBSD was 10.3, that's why it is used here
+pkg install -y mod_php81 php81-mysqli php81-tokenizer php81-zlib php81-zip php81 rsync php81-gd curl php81-curl php81-xml php81-bcmath php81-mbstring php81-pecl-imagick php81-pecl-imagick php81-iconv php81-filter php81-pecl-json_post php81-pear-Services_JSON php81-exif php81-fileinfo php81-dom php81-session php81-ctype php81-simplexml php81-phar php81-gmp &> /dev/null
 
 printf "."
 
