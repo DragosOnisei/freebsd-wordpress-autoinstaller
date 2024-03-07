@@ -45,21 +45,26 @@ printf "Installing and configuring software "
 ## Install the software required for basic jail stuff ##
 pkg update -fq &>/dev/null
 pkg upgrade -y &>/dev/null
-pkg install -y nano htop bmon iftop sudo figlet 
+pkg install -y nano htop bmon iftop sudo figlet &>/dev/null
+printf "."
 
 ## Pre-Install the software required for basic jail stuff ##
-pkg install -y apache24 mariadb106-server mariadb106-client 
+pkg install -y apache24 mariadb106-server mariadb106-client &> /dev/null  ## Up to 12 Oct 2020 the newest version of working MariaDB of FreeBSD was 10.3, that's why it is used here
+pkg install -y mod_php81 php81-mysqli php81-tokenizer php81-zlib php81-zip php81 rsync php81-gd curl php81-curl php81-xml php81-bcmath php81-mbstring php81-pecl-imagick php81-pecl-imagick php81-iconv php81-filter php81-pecl-json_post php81-pear-Services_JSON php81-exif php81-fileinfo php81-dom php81-session php81-ctype php81-simplexml php81-phar php81-gmp &> /dev/null
 
+printf "."
 
 ## Download my own implementation of random password generator
 curl -sS "https://gitlab.gateway-it.com/yaroslav/NimPasswordGenerator/-/raw/main/bin/password_generator_freebsd_x64?ref_type=heads" --output /bin/password_generator
 chmod +x /bin/password_generator
 
+printf "."
 
 ## Set the correct banner ##
 figlet 'DragosOnisei' &> /etc/motd
-service motd restart
+service motd restart &>/dev/null
 
+printf "."
 
 ## Enable and start the services ##
 # sysrc apache24_enable=yes mysql_enable=yes &>/dev/null
@@ -103,30 +108,35 @@ FLUSH PRIVILEGES;
 EOF_WP_DATABASE
 
 # Install the required PHP modules
-pkg install -y rsync curl
-pkg install -y php81 mod_php81
-(pkg install -y php81-mysqli || true)
-(pkg install -y php81-tokenizer || true)
-(pkg install -y php81-zlib || true)
-(pkg install -y php81-zip || true)
-(pkg install -y php81-gd || true)
-(pkg install -y php81-curl || true)
-(pkg install -y php81-xml || true)
-(pkg install -y php81-intl || true)
-(pkg install -y php81-bcmath || true)
-(pkg install -y php81-mbstring || true)
-(pkg install -y php81-pecl-imagick || true)
-(pkg install -y php81-iconv || true)
-(pkg install -y php81-filter || true)
-(pkg install -y php81-pear-Services_JSON || true)
-(pkg install -y php81-exif || true)
-(pkg install -y php81-fileinfo || true)
-(pkg install -y php81-session || true)
-(pkg install -y php81-ctype || true)
-(pkg install -y php81-simplexml || true)
-(pkg install -y php81-phar || true)
-(pkg install -y php81-gmp || true)
-(pkg install -y php81-dom || true)
+pkg install -y rsync curl &>/dev/null
+pkg install -y php81 mod_php81 &>/dev/null
+(pkg install -y php81-mysqli || true) &>/dev/null
+(pkg install -y php81-tokenizer || true) &>/dev/null
+(pkg install -y php81-zlib || true) &>/dev/null
+printf "."
+(pkg install -y php81-zip || true) &>/dev/null
+(pkg install -y php81-gd || true) &>/dev/null
+(pkg install -y php81-curl || true) &>/dev/null
+(pkg install -y php81-xml || true) &>/dev/null
+printf "."
+(pkg install -y php81-intl || true) &>/dev/null
+(pkg install -y php81-bcmath || true) &>/dev/null
+(pkg install -y php81-mbstring || true) &>/dev/null
+(pkg install -y php81-pecl-imagick || true) &>/dev/null
+printf "."
+(pkg install -y php81-iconv || true) &>/dev/null
+(pkg install -y php81-filter || true) &>/dev/null
+(pkg install -y php81-pear-Services_JSON || true) &>/dev/null
+(pkg install -y php81-exif || true) &>/dev/null
+printf "."
+(pkg install -y php81-fileinfo || true) &>/dev/null
+(pkg install -y php81-session || true) &>/dev/null
+(pkg install -y php81-ctype || true) &>/dev/null
+(pkg install -y php81-simplexml || true) &>/dev/null
+printf "."
+(pkg install -y php81-phar || true) &>/dev/null
+(pkg install -y php81-gmp || true) &>/dev/null
+(pkg install -y php81-dom || true) &>/dev/null
 
 cp /usr/local/etc/php.ini-production /usr/local/etc/php.ini
 cat <<'EOF_ENABLE_PHP_FILES' | cat >/usr/local/etc/apache24/Includes/php.conf
@@ -141,7 +151,7 @@ cat <<'EOF_ENABLE_PHP_FILES' | cat >/usr/local/etc/apache24/Includes/php.conf
 </IfModule>
 EOF_ENABLE_PHP_FILES
 
-
+printf ". "
 # shellcheck disable=SC2059
 printf "${GREEN}Done${NC}\n"
 
@@ -149,10 +159,11 @@ printf "Downloading WordPress, WP-CLI and populating the default config files "
 
 ## Download and install wp-cli ##
 cd /root/
-curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar &>/dev/null
 chmod +x wp-cli.phar
 sudo mv wp-cli.phar /usr/local/bin/wp
 
+printf "."
 
 ## Make Apache conf file sensible and ready for use with WordPress
 cp /usr/local/etc/apache24/httpd.conf /usr/local/etc/apache24/httpd.conf.BACKUP
@@ -284,7 +295,9 @@ EOF_APACHE_CONFIG
 
 ## Restart apache and make sure that it's running ##
 #### CODE TO DO A HEALTH CHECK IS NOT YET PRESENT ####
-service apache24 restart
+service apache24 restart &>/dev/null
+
+printf "."
 
 ## Download the latest version of WordPress, move it into the correct folder and assign right permissions ##
 cd /tmp
@@ -331,6 +344,7 @@ while [[ $(ls -al /tmp/ | grep "local.tar.gz" | awk '{print $5}') -ne $(ls -al /
 done
 tar xf /tmp/local.tar.gz
 
+printf "."
 
 rm /usr/local/www/apache24/data/index.html
 cp -r /tmp/wordpress/* /usr/local/www/apache24/data/
@@ -348,6 +362,7 @@ echo "php_value memory_limit 256M" >>/usr/local/www/apache24/data/.htaccess
 echo "php_value max_execution_time 300" >>/usr/local/www/apache24/data/.htaccess
 echo "php_value max_input_time 300" >>/usr/local/www/apache24/data/.htaccess
 
+printf "."
 
 ## Create a proper WP_CONFIG.PHP, populate it with required DB info and randomize the required values ##
 WP_DB_PREFIX=$(password_generator generate --length 4 --lower)
@@ -473,6 +488,7 @@ sed -i '' "/'DB_USER'/s/username_here/$DB_WPDB_USER/" /usr/local/www/apache24/da
 sed -i '' "/'DB_PASSWORD'/s/password_here/$DB_WPDB_USER_PASSWORD/" /usr/local/www/apache24/data/wp-config.php
 sed -i '' "/\$table_prefix =/s/'wp_'/'${WP_DB_PREFIX}_'/" /usr/local/www/apache24/data/wp-config.php
 
+printf ". "
 
 # shellcheck disable=SC2059
 printf "${GREEN}Done${NC}\n"
@@ -545,7 +561,7 @@ IPADDR=$(ifconfig | grep "192\|10\|172" | awk '{print $2}' | awk '/^192|^10|^172
 printf "The installation is now finished."
 printf "You can visit the link below to configure or test your new WordPress website.\n"
 # shellcheck disable=SC2059
-printf "${CYAN}http://${IPADDR}/wp-admin/${NC}\n"
+printf "${CYAN}https://${IPADDR}/wp-admin/${NC}\n"
 
 printf "\n"
 
