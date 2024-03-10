@@ -21,6 +21,9 @@ CYAN='\033[0;36m'
 # LIGHTCYAN='\033[1;36m'
 # WHITE='\033[1;37m'
 
+# Exit on error
+set -e -u
+
 if [[ $USER = root ]]; then
     # shellcheck disable=SC2059
     printf "You ${GREEN}passed the root user check${NC}, all good.\n"
@@ -48,19 +51,19 @@ pkg upgrade -y &>/dev/null
 pkg install -y nano htop bmon iftop sudo figlet &>/dev/null
 printf "."
 
-## Pre-Install the software required for basic jail stuff ##
-pkg install -y apache24 mariadb106-server mariadb106-client &> /dev/null  ## Up to 12 Oct 2020 the newest version of working MariaDB of FreeBSD was 10.3, that's why it is used here
-pkg install -y mod_php81 php81-mysqli php81-tokenizer php81-zlib php81-zip php81 rsync php81-gd curl php81-curl php81-xml php81-bcmath php81-mbstring php81-pecl-imagick php81-pecl-imagick php81-iconv php81-filter php81-pecl-json_post php81-pear-Services_JSON php81-exif php81-fileinfo php81-dom php81-session php81-ctype php81-simplexml php81-phar php81-gmp &> /dev/null
-printf "."
-
 ## Download my own implementation of random password generator
 curl -sS "https://gitlab.gateway-it.com/yaroslav/NimPasswordGenerator/-/raw/main/bin/password_generator_freebsd_x64?ref_type=heads" --output /bin/password_generator
 chmod +x /bin/password_generator
+
 printf "."
 
 ## Set the correct banner ##
 figlet 'DragosOnisei' &> /etc/motd
 service motd restart &>/dev/null
+
+## Up to 12 Oct 2020 the newest version of working MariaDB of FreeBSD was 10.3, that's why it is used here. ##
+pkg install -y apache24 mariadb106-server mariadb106-client &>/dev/null
+
 printf "."
 
 ## Enable and start the services ##
@@ -94,6 +97,7 @@ SET PASSWORD FOR 'root'@'localhost' = PASSWORD('${DB_ROOT_PASSWORD}');
 FLUSH PRIVILEGES;
 EOF_SET_ROOT_PASS
 
+#### Create check if password lock down worked, if not, kill the process ####
 #### Create check if password lock down worked, if not, kill the process ####
 
 ## Create wordpress database and assign a new user to it ##
@@ -147,11 +151,20 @@ cat <<'EOF_ENABLE_PHP_FILES' | cat >/usr/local/etc/apache24/Includes/php.conf
     </FilesMatch>
 </IfModule>
 EOF_ENABLE_PHP_FILES
+
+printf "."
+
+## Make a self-signed SSL cert
+mkdir -p /usr/local/www/apache24/ssl/
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /usr/local/www/apache24/ssl/self.key -out /usr/local/www/apache24/ssl/self.crt -subj "/C=GB/ST=London/L=London/O=Global Security/OU=Gateway-IT Department/CN=gateway-it.intranet" &>/dev/null
+
+chown www:www /usr/local/www/apache24/ssl/self.key
+chown www:www /usr/local/www/apache24/ssl/self.crt
+
 printf ". "
 
 # shellcheck disable=SC2059
 printf "${GREEN}Done${NC}\n"
-
 printf "Downloading WordPress, WP-CLI and populating the default config files "
 
 ## Download and install wp-cli ##
@@ -159,6 +172,7 @@ cd /root/
 curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar &>/dev/null
 chmod +x wp-cli.phar
 sudo mv wp-cli.phar /usr/local/bin/wp
+
 printf "."
 
 ## Make Apache conf file sensible and ready for use with WordPress
@@ -167,7 +181,7 @@ rm /usr/local/etc/apache24/httpd.conf
 
 cat <<'EOF_APACHE_CONFIG' | cat >/usr/local/etc/apache24/httpd.conf
 ServerRoot "/usr/local"
-Listen 80
+Listen 443
 LoadModule mpm_prefork_module libexec/apache24/mod_mpm_prefork.so
 LoadModule authn_file_module libexec/apache24/mod_authn_file.so
 LoadModule authn_core_module libexec/apache24/mod_authn_core.so
@@ -215,6 +229,10 @@ ServerAdmin random@rdomain.intranet
     AllowOverride None
     Require all denied
 </Directory>
+
+SSLEngine on
+SSLCertificateFile /usr/local/www/apache24/ssl/self.crt
+SSLCertificateKeyFile /usr/local/www/apache24/ssl/self.key
 
 DocumentRoot "/usr/local/www/apache24/data"
 <Directory "/usr/local/www/apache24/data">
