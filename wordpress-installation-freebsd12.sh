@@ -51,19 +51,16 @@ printf "."
 ## Pre-Install the software required for basic jail stuff ##
 pkg install -y apache24 mariadb106-server mariadb106-client &> /dev/null  ## Up to 12 Oct 2020 the newest version of working MariaDB of FreeBSD was 10.3, that's why it is used here
 pkg install -y mod_php81 php81-mysqli php81-tokenizer php81-zlib php81-zip php81 rsync php81-gd curl php81-curl php81-xml php81-bcmath php81-mbstring php81-pecl-imagick php81-pecl-imagick php81-iconv php81-filter php81-pecl-json_post php81-pear-Services_JSON php81-exif php81-fileinfo php81-dom php81-session php81-ctype php81-simplexml php81-phar php81-gmp &> /dev/null
-
 printf "."
 
 ## Download my own implementation of random password generator
 curl -sS "https://gitlab.gateway-it.com/yaroslav/NimPasswordGenerator/-/raw/main/bin/password_generator_freebsd_x64?ref_type=heads" --output /bin/password_generator
 chmod +x /bin/password_generator
-
 printf "."
 
 ## Set the correct banner ##
 figlet 'DragosOnisei' &> /etc/motd
 service motd restart &>/dev/null
-
 printf "."
 
 ## Enable and start the services ##
@@ -150,8 +147,8 @@ cat <<'EOF_ENABLE_PHP_FILES' | cat >/usr/local/etc/apache24/Includes/php.conf
     </FilesMatch>
 </IfModule>
 EOF_ENABLE_PHP_FILES
-
 printf ". "
+
 # shellcheck disable=SC2059
 printf "${GREEN}Done${NC}\n"
 
@@ -162,7 +159,6 @@ cd /root/
 curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar &>/dev/null
 chmod +x wp-cli.phar
 sudo mv wp-cli.phar /usr/local/bin/wp
-
 printf "."
 
 ## Make Apache conf file sensible and ready for use with WordPress
@@ -458,18 +454,15 @@ $table_prefix = 'wp_';
 // define('DISABLE_WP_CRON', true);
 define('WP_DEBUG', false);
 
-if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https' || !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
-    $protocol = 'https://';
+if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
+    $_SERVER['HTTPS'] = 'on';
+    define('WP_SITEURL', 'https://' . $_SERVER['HTTP_HOST']);
+    define('WP_HOME', 'https://' . $_SERVER['HTTP_HOST']);
 } else {
-    $protocol = 'http://';
+    define('WP_SITEURL', 'http://' . $_SERVER['HTTP_HOST']);
+    define('WP_HOME', 'http://' . $_SERVER['HTTP_HOST']);
 }
 
-if (!defined('WP_SITEURL')) {
-    define('WP_SITEURL', $protocol . $_SERVER['HTTP_HOST']);
-}
-if (!defined('WP_HOME')) {
-    define('WP_HOME', $protocol . $_SERVER['HTTP_HOST']);
-}
 
 define( 'WP_CACHE', true );
 
