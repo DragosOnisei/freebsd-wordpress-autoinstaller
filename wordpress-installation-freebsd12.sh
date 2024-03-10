@@ -21,9 +21,6 @@ CYAN='\033[0;36m'
 # LIGHTCYAN='\033[1;36m'
 # WHITE='\033[1;37m'
 
-# Exit on error
-set -e -u
-
 if [[ $USER = root ]]; then
     # shellcheck disable=SC2059
     printf "You ${GREEN}passed the root user check${NC}, all good.\n"
@@ -37,7 +34,7 @@ if [[ ${SHELL} = $(which bash) ]] || [[ ${SHELL} = /usr/local/bin/bash ]] || [[ 
     printf "bash is a sane choice of shell, ${GREEN}proceeding with the installation${NC}.\n"
 else
     printf "This is not bash! Install and set bash as your default shell, then logout, login and start the script again.\n"
-    pkg install -y bash &>/dev/null
+    pkg install -y bash  
     chsh -s bash root
     exit
 fi
@@ -46,32 +43,28 @@ printf "\n"
 printf "Installing and configuring software "
 
 ## Install the software required for basic jail stuff ##
-pkg update -fq &>/dev/null
-pkg upgrade -y &>/dev/null
-pkg install -y nano htop bmon iftop sudo figlet &>/dev/null
-printf "."
+pkg update -fq  
+pkg upgrade -y  
+pkg install -y nano htop bmon iftop sudo figlet
+
+## Pre-Install the software required for basic jail stuff ##
+pkg install -y apache24 mariadb106-server mariadb106-client &> /dev/null  ## Up to 12 Oct 2020 the newest version of working MariaDB of FreeBSD was 10.3, that's why it is used here
+pkg install -y mod_php81 php81-mysqli php81-tokenizer php81-zlib php81-zip php81 rsync php81-gd curl php81-curl php81-xml php81-bcmath php81-mbstring php81-pecl-imagick php81-pecl-imagick php81-iconv php81-filter php81-pecl-json_post php81-pear-Services_JSON php81-exif php81-fileinfo php81-dom php81-session php81-ctype php81-simplexml php81-phar php81-gmp
 
 ## Download my own implementation of random password generator
 curl -sS "https://gitlab.gateway-it.com/yaroslav/NimPasswordGenerator/-/raw/main/bin/password_generator_freebsd_x64?ref_type=heads" --output /bin/password_generator
 chmod +x /bin/password_generator
 
-printf "."
-
 ## Set the correct banner ##
 figlet 'DragosOnisei' &> /etc/motd
-service motd restart &>/dev/null
-
-## Up to 12 Oct 2020 the newest version of working MariaDB of FreeBSD was 10.3, that's why it is used here. ##
-pkg install -y apache24 mariadb106-server mariadb106-client &>/dev/null
-
-printf "."
+service motd restart
 
 ## Enable and start the services ##
-# sysrc apache24_enable=yes mysql_enable=yes &>/dev/null
-(service apache24 enable || true) &>/dev/null
-(service apache24 start || true) &>/dev/null
-(service mysql-server enable || true) &>/dev/null
-(service mysql-server start || true) &>/dev/null
+# sysrc apache24_enable=yes mysql_enable=yes  
+(service apache24 enable || true)  
+(service apache24 start || true)  
+(service mysql-server enable || true)  
+(service mysql-server start || true)  
 
 #### Create if check to perform health check on MariaDB server and Apache24 ####
 #### Create if check to perform health check on MariaDB server and Apache24 ####
@@ -83,7 +76,7 @@ DB_WPDB_USER=wpdbuser_$(password_generator generate --length 6 --lower)
 DB_WPDB_USER_PASSWORD=$(password_generator generate --length 35)
 
 ## Secure the MariaDB install ##
-mysql_secure_installation <<EOF_MSQLSI &>/dev/null
+mysql_secure_installation <<EOF_MSQLSI  
 
 n
 y
@@ -98,7 +91,6 @@ FLUSH PRIVILEGES;
 EOF_SET_ROOT_PASS
 
 #### Create check if password lock down worked, if not, kill the process ####
-#### Create check if password lock down worked, if not, kill the process ####
 
 ## Create wordpress database and assign a new user to it ##
 mysql -uroot -p"${DB_ROOT_PASSWORD}" <<EOF_WP_DATABASE
@@ -109,35 +101,34 @@ FLUSH PRIVILEGES;
 EOF_WP_DATABASE
 
 # Install the required PHP modules
-pkg install -y rsync curl &>/dev/null
-pkg install -y php81 mod_php81 &>/dev/null
-(pkg install -y php81-mysqli || true) &>/dev/null
-(pkg install -y php81-tokenizer || true) &>/dev/null
-(pkg install -y php81-zlib || true) &>/dev/null
-printf "."
-(pkg install -y php81-zip || true) &>/dev/null
-(pkg install -y php81-gd || true) &>/dev/null
-(pkg install -y php81-curl || true) &>/dev/null
-(pkg install -y php81-xml || true) &>/dev/null
-printf "."
-(pkg install -y php81-intl || true) &>/dev/null
-(pkg install -y php81-bcmath || true) &>/dev/null
-(pkg install -y php81-mbstring || true) &>/dev/null
-(pkg install -y php81-pecl-imagick || true) &>/dev/null
-printf "."
-(pkg install -y php81-iconv || true) &>/dev/null
-(pkg install -y php81-filter || true) &>/dev/null
-(pkg install -y php81-pear-Services_JSON || true) &>/dev/null
-(pkg install -y php81-exif || true) &>/dev/null
-printf "."
-(pkg install -y php81-fileinfo || true) &>/dev/null
-(pkg install -y php81-session || true) &>/dev/null
-(pkg install -y php81-ctype || true) &>/dev/null
-(pkg install -y php81-simplexml || true) &>/dev/null
-printf "."
-(pkg install -y php81-phar || true) &>/dev/null
-(pkg install -y php81-gmp || true) &>/dev/null
-(pkg install -y php81-dom || true) &>/dev/null
+pkg install -y rsync curl  
+pkg install -y php81 mod_php81  
+(pkg install -y php81-mysqli || true)  
+(pkg install -y php81-tokenizer || true)  
+(pkg install -y php81-zlib || true)
+(pkg install -y php81-zip || true)  
+(pkg install -y php81-gd || true)  
+(pkg install -y php81-curl || true)  
+(pkg install -y php81-xml || true)  
+ 
+(pkg install -y php81-intl || true)  
+(pkg install -y php81-bcmath || true)  
+(pkg install -y php81-mbstring || true)  
+(pkg install -y php81-pecl-imagick || true)  
+ 
+(pkg install -y php81-iconv || true)  
+(pkg install -y php81-filter || true)  
+(pkg install -y php81-pear-Services_JSON || true)  
+(pkg install -y php81-exif || true)  
+ 
+(pkg install -y php81-fileinfo || true)  
+(pkg install -y php81-session || true)  
+(pkg install -y php81-ctype || true)  
+(pkg install -y php81-simplexml || true)  
+ 
+(pkg install -y php81-phar || true)  
+(pkg install -y php81-gmp || true)  
+(pkg install -y php81-dom || true)  
 
 cp /usr/local/etc/php.ini-production /usr/local/etc/php.ini
 cat <<'EOF_ENABLE_PHP_FILES' | cat >/usr/local/etc/apache24/Includes/php.conf
@@ -152,28 +143,17 @@ cat <<'EOF_ENABLE_PHP_FILES' | cat >/usr/local/etc/apache24/Includes/php.conf
 </IfModule>
 EOF_ENABLE_PHP_FILES
 
-printf "."
-
-## Make a self-signed SSL cert
-mkdir -p /usr/local/www/apache24/ssl/
-openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /usr/local/www/apache24/ssl/self.key -out /usr/local/www/apache24/ssl/self.crt -subj "/C=GB/ST=London/L=London/O=Global Security/OU=Gateway-IT Department/CN=gateway-it.intranet" &>/dev/null
-
-chown www:www /usr/local/www/apache24/ssl/self.key
-chown www:www /usr/local/www/apache24/ssl/self.crt
-
-printf ". "
-
 # shellcheck disable=SC2059
 printf "${GREEN}Done${NC}\n"
+
 printf "Downloading WordPress, WP-CLI and populating the default config files "
 
 ## Download and install wp-cli ##
 cd /root/
-curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar &>/dev/null
+curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar  
 chmod +x wp-cli.phar
 sudo mv wp-cli.phar /usr/local/bin/wp
-
-printf "."
+ 
 
 ## Make Apache conf file sensible and ready for use with WordPress
 cp /usr/local/etc/apache24/httpd.conf /usr/local/etc/apache24/httpd.conf.BACKUP
@@ -181,7 +161,7 @@ rm /usr/local/etc/apache24/httpd.conf
 
 cat <<'EOF_APACHE_CONFIG' | cat >/usr/local/etc/apache24/httpd.conf
 ServerRoot "/usr/local"
-Listen 443
+Listen 80
 LoadModule mpm_prefork_module libexec/apache24/mod_mpm_prefork.so
 LoadModule authn_file_module libexec/apache24/mod_authn_file.so
 LoadModule authn_core_module libexec/apache24/mod_authn_core.so
@@ -229,10 +209,6 @@ ServerAdmin random@rdomain.intranet
     AllowOverride None
     Require all denied
 </Directory>
-
-SSLEngine on
-SSLCertificateFile /usr/local/www/apache24/ssl/self.crt
-SSLCertificateKeyFile /usr/local/www/apache24/ssl/self.key
 
 DocumentRoot "/usr/local/www/apache24/data"
 <Directory "/usr/local/www/apache24/data">
@@ -309,9 +285,9 @@ EOF_APACHE_CONFIG
 
 ## Restart apache and make sure that it's running ##
 #### CODE TO DO A HEALTH CHECK IS NOT YET PRESENT ####
-service apache24 restart &>/dev/null
+service apache24 restart  
 
-printf "."
+ 
 
 ## Download the latest version of WordPress, move it into the correct folder and assign right permissions ##
 cd /tmp
@@ -358,14 +334,14 @@ while [[ $(ls -al /tmp/ | grep "local.tar.gz" | awk '{print $5}') -ne $(ls -al /
 done
 tar xf /tmp/local.tar.gz
 
-printf "."
+ 
 
 rm /usr/local/www/apache24/data/index.html
 cp -r /tmp/wordpress/* /usr/local/www/apache24/data/
 chown -R www:www /usr/local/www/apache24/data/
 
 # .htaccess file + some php.ini configuration settings inside it
-touch /usr/local/www/apache24/data/.htaccess &>/dev/null
+touch /usr/local/www/apache24/data/.htaccess  
 chown www:www /usr/local/www/apache24/data/.htaccess
 
 # shellcheck disable=SC2129
@@ -376,7 +352,7 @@ echo "php_value memory_limit 256M" >>/usr/local/www/apache24/data/.htaccess
 echo "php_value max_execution_time 300" >>/usr/local/www/apache24/data/.htaccess
 echo "php_value max_input_time 300" >>/usr/local/www/apache24/data/.htaccess
 
-printf "."
+ 
 
 ## Create a proper WP_CONFIG.PHP, populate it with required DB info and randomize the required values ##
 WP_DB_PREFIX=$(password_generator generate --length 4 --lower)
@@ -532,17 +508,17 @@ chown -R www /home/www
 pw usermod www -d /home/www
 #sed -i '' "/World Wide Web Owner/s/\/nonexistent/\/home\/www/" /etc/master.passwd
 
-sudo -u www wp core install --url=127.0.0.1 --title="Dragos Created Website" --admin_user="${WP_CLI_USERNAME}" --admin_password="${WP_CLI_USER_PASSWORD}" --admin_email="${WP_CLI_USER_EMAIL}" &>/dev/null
-sudo -u www wp rewrite structure '/%postname%/' --hard &>/dev/null
-sudo -u www wp plugin delete akismet hello &>/dev/null
-sudo -u www wp site empty --yes &>/dev/null
+sudo -u www wp core install --url=127.0.0.1 --title="Dragos Created Website" --admin_user="${WP_CLI_USERNAME}" --admin_password="${WP_CLI_USER_PASSWORD}" --admin_email="${WP_CLI_USER_EMAIL}"  
+sudo -u www wp rewrite structure '/%postname%/' --hard  
+sudo -u www wp plugin delete akismet hello  
+sudo -u www wp site empty --yes  
 # sudo -u www wp theme delete twentyseventeen &> /dev/null
-# sudo -u www wp theme delete twentynineteen &>/dev/null
-# sudo -u www wp theme delete twentytwenty &>/dev/null
-sudo -u www wp theme delete twentytwentyone &>/dev/null
-sudo -u www wp theme delete twentytwentytwo &>/dev/null
-sudo -u www wp theme delete twentytwentythree &>/dev/null
-sudo -u www wp user update "${WP_CLI_USERNAME}" --user_pass="${WP_CLI_USER_PASSWORD}" &>/dev/null
+# sudo -u www wp theme delete twentynineteen  
+# sudo -u www wp theme delete twentytwenty  
+sudo -u www wp theme delete twentytwentyone  
+sudo -u www wp theme delete twentytwentytwo  
+sudo -u www wp theme delete twentytwentythree  
+sudo -u www wp user update "${WP_CLI_USERNAME}" --user_pass="${WP_CLI_USER_PASSWORD}"  
 
 # shellcheck disable=SC2059
 printf " ..... ${GREEN}Done${NC}\n"
@@ -570,7 +546,7 @@ printf "\n"
 
 # Restart apache and make sure that it's running
 #### CODE TO DO A HEALTH CHECK IS NOT YET PRESENT ####
-service apache24 restart &>/dev/null
+service apache24 restart  
 
 IPADDR=$(ifconfig | grep "192\|10\|172" | awk '{print $2}' | awk '/^192|^10|^172/')
 
