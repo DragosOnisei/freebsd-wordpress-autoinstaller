@@ -458,8 +458,18 @@ $table_prefix = 'wp_';
 // define('DISABLE_WP_CRON', true);
 define('WP_DEBUG', false);
 
-define('WP_SITEURL', 'http://'.$_SERVER['HTTP_HOST']);
-define('WP_HOME', 'http://'.$_SERVER['HTTP_HOST']);
+if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https' || !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
+    $protocol = 'https://';
+} else {
+    $protocol = 'http://';
+}
+
+if (!defined('WP_SITEURL')) {
+    define('WP_SITEURL', $protocol . $_SERVER['HTTP_HOST']);
+}
+if (!defined('WP_HOME')) {
+    define('WP_HOME', $protocol . $_SERVER['HTTP_HOST']);
+}
 
 define( 'WP_CACHE', true );
 
