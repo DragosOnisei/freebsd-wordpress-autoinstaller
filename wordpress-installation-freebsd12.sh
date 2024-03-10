@@ -457,18 +457,6 @@ if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROT
     define('WP_HOME', 'http://' . $_SERVER['HTTP_HOST']);
 }
 
-
-
-# THIS CAN BE DELETED Check if wp-config.php exists and then append the HTTPS check configuration
-if [ -f "$WP_CONFIG" ]; then
-    echo "if (strpos(\$_SERVER['HTTP_X_FORWARDED_PROTO'], 'https') !== false) {" >> $WP_CONFIG
-    echo "    \$_SERVER['HTTPS'] = 'on';" >> $WP_CONFIG
-    echo "}" >> $WP_CONFIG
-else
-    echo "wp-config.php not found at $WP_CONFIG. Ensure WordPress is installed correctly."
-fi
-# THIS CAN BE DELETED Check if wp-config.php exists and then append the HTTPS check configuration
-
 define( 'WP_CACHE', true );
 
 /* That's all, stop editing! Happy publishing. */
