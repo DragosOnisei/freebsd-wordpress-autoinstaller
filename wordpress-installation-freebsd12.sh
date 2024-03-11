@@ -531,15 +531,6 @@ sudo -u www wp plugin install under-construction-page --activate --path=/usr/loc
 sudo -u www wp plugin install duplicate-page --activate --path=/usr/local/www/apache24/data
 sudo -u www wp plugin install all-in-one-wp-migration --activate --path=/usr/local/www/apache24/data
 
-# Correct permissions after setup
-chmod 755 /usr/local/www/apache24/data/wp-content
-
-# Ensure advanced-cache.php can be created or updated by WP Super Cache
-if [ ! -f "/usr/local/www/apache24/data/wp-content/advanced-cache.php" ]; then
-    touch /usr/local/www/apache24/data/wp-content/advanced-cache.php
-fi
-chmod 666 /usr/local/www/apache24/data/wp-content/advanced-cache.php
-
 # Continue with any final steps in your script
 service apache24 restart
 
