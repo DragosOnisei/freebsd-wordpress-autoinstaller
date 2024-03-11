@@ -486,6 +486,16 @@ sed -i '' "/\$table_prefix =/s/'wp_'/'${WP_DB_PREFIX}_'/" /usr/local/www/apache2
 
 printf ". "
 
+# Install and activate recommended plugins
+wp plugin install wp-super-cache --activate --path=$WP_PATH
+wp plugin install wp-smushit --activate --path=$WP_PATH
+wp plugin install wordpress-seo --activate --path=$WP_PATH
+wp plugin install autoptimize --activate --path=$WP_PATH
+wp plugin install wordfence --activate --path=$WP_PATH
+wp plugin install wp-optimize --activate --path=$WP_PATH
+
+echo "Plugins installed and activated successfully."
+
 # shellcheck disable=SC2059
 printf "${GREEN}Done${NC}\n"
 printf "Initializing the WordPress installation and removing the default garbage "
