@@ -486,15 +486,16 @@ sed -i '' "/\$table_prefix =/s/'wp_'/'${WP_DB_PREFIX}_'/" /usr/local/www/apache2
 
 printf ". "
 
-# Install and activate recommended plugins
-wp plugin install wp-super-cache --activate --path=$WP_PATH
-wp plugin install wp-smushit --activate --path=$WP_PATH
-wp plugin install wordpress-seo --activate --path=$WP_PATH
-wp plugin install autoptimize --activate --path=$WP_PATH
-wp plugin install wordfence --activate --path=$WP_PATH
-wp plugin install wp-optimize --activate --path=$WP_PATH
+# Insert plugin installation commands here
+wp plugin install wp-super-cache --activate --path=/usr/local/www/apache24/data
+wp plugin install wp-smushit --activate --path=/usr/local/www/apache24/data
+wp plugin install wordpress-seo --activate --path=/usr/local/www/apache24/data
+wp plugin install autoptimize --activate --path=/usr/local/www/apache24/data
+wp plugin install wordfence --activate --path=/usr/local/www/apache24/data
+wp plugin install wp-optimize --activate --path=/usr/local/www/apache24/data
 
-echo "Plugins installed and activated successfully."
+# Commands to restart Apache and apply final configurations
+service apache24 restart
 
 # shellcheck disable=SC2059
 printf "${GREEN}Done${NC}\n"
