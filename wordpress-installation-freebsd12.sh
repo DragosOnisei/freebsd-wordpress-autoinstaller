@@ -523,12 +523,26 @@ sudo -u www wp theme delete twentytwentythree
 sudo -u www wp user update "${WP_CLI_USERNAME}" --user_pass="${WP_CLI_USER_PASSWORD}"  
 
 # Insert the corrected plugin installation commands here
-sudo -u www wp plugin install wp-super-cache --activate --path=/usr/local/www/apache24/data
-sudo -u www wp plugin install wp-smushit --activate --path=/usr/local/www/apache24/data
 sudo -u www wp plugin install wordpress-seo --activate --path=/usr/local/www/apache24/data
-sudo -u www wp plugin install autoptimize --activate --path=/usr/local/www/apache24/data
 sudo -u www wp plugin install wordfence --activate --path=/usr/local/www/apache24/data
-sudo -u www wp plugin install wp-optimize --activate --path=/usr/local/www/apache24/data
+sudo -u www wp plugin install favicon-by-realfavicongenerator --activate --path=/usr/local/www/apache24/data
+sudo -u www wp plugin install disable-admin-notices --activate --path=/usr/local/www/apache24/data
+sudo -u www wp plugin install under-construction-page --activate --path=/usr/local/www/apache24/data
+sudo -u www wp plugin install duplicate-page --activate --path=/usr/local/www/apache24/data
+sudo -u www wp plugin install all-in-one-wp-migration --activate --path=/usr/local/www/apache24/data
+
+# Correct permissions after setup
+chmod 755 /usr/local/www/apache24/data/wp-content
+
+# Ensure advanced-cache.php can be created or updated by WP Super Cache
+if [ ! -f "/usr/local/www/apache24/data/wp-content/advanced-cache.php" ]; then
+    touch /usr/local/www/apache24/data/wp-content/advanced-cache.php
+fi
+chmod 666 /usr/local/www/apache24/data/wp-content/advanced-cache.php
+
+# Continue with any final steps in your script
+service apache24 restart
+
 
 # shellcheck disable=SC2059
 printf " ..... ${GREEN}Done${NC}\n"
