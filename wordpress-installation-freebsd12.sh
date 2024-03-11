@@ -486,14 +486,6 @@ sed -i '' "/\$table_prefix =/s/'wp_'/'${WP_DB_PREFIX}_'/" /usr/local/www/apache2
 
 printf ". "
 
-# Insert plugin installation commands here
-wp plugin install wp-super-cache --activate --path=/usr/local/www/apache24/data
-wp plugin install wp-smushit --activate --path=/usr/local/www/apache24/data
-wp plugin install wordpress-seo --activate --path=/usr/local/www/apache24/data
-wp plugin install autoptimize --activate --path=/usr/local/www/apache24/data
-wp plugin install wordfence --activate --path=/usr/local/www/apache24/data
-wp plugin install wp-optimize --activate --path=/usr/local/www/apache24/data
-
 # Commands to restart Apache and apply final configurations
 service apache24 restart
 
@@ -529,6 +521,14 @@ sudo -u www wp theme delete twentytwentyone
 sudo -u www wp theme delete twentytwentytwo  
 sudo -u www wp theme delete twentytwentythree  
 sudo -u www wp user update "${WP_CLI_USERNAME}" --user_pass="${WP_CLI_USER_PASSWORD}"  
+
+# Insert the corrected plugin installation commands here
+sudo -u www wp plugin install wp-super-cache --activate --path=/usr/local/www/apache24/data
+sudo -u www wp plugin install wp-smushit --activate --path=/usr/local/www/apache24/data
+sudo -u www wp plugin install wordpress-seo --activate --path=/usr/local/www/apache24/data
+sudo -u www wp plugin install autoptimize --activate --path=/usr/local/www/apache24/data
+sudo -u www wp plugin install wordfence --activate --path=/usr/local/www/apache24/data
+sudo -u www wp plugin install wp-optimize --activate --path=/usr/local/www/apache24/data
 
 # shellcheck disable=SC2059
 printf " ..... ${GREEN}Done${NC}\n"
