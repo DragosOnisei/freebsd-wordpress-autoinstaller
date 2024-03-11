@@ -531,6 +531,10 @@ sudo -u www wp plugin install under-construction-page --activate --path=/usr/loc
 sudo -u www wp plugin install duplicate-page --activate --path=/usr/local/www/apache24/data
 sudo -u www wp plugin install all-in-one-wp-migration --activate --path=/usr/local/www/apache24/data
 
+# Ensure wp-content and plugins directory is writable before reactivation or deletion
+chmod 755 /usr/local/www/apache24/data/wp-content
+chmod 755 /usr/local/www/apache24/data/wp-content/plugins
+
 # Continue with any final steps in your script
 service apache24 restart
 
