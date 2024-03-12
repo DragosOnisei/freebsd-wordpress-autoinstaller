@@ -352,7 +352,27 @@ echo "php_value memory_limit 256M" >>/usr/local/www/apache24/data/.htaccess
 echo "php_value max_execution_time 300" >>/usr/local/www/apache24/data/.htaccess
 echo "php_value max_input_time 300" >>/usr/local/www/apache24/data/.htaccess
 
- 
+
+# Continue appending to .htaccess for Expires headers CAN BE DELETED
+echo "# EXPIRES HEADER CACHING" >> /usr/local/www/apache24/data/.htaccess
+echo "<IfModule mod_expires.c>" >> /usr/local/www/apache24/data/.htaccess
+echo "  ExpiresActive On" >> /usr/local/www/apache24/data/.htaccess
+echo "  # Images" >> /usr/local/www/apache24/data/.htaccess
+echo "  ExpiresByType image/jpeg \"access plus 1 year\"" >> /usr/local/www/apache24/data/.htaccess
+echo "  ExpiresByType image/gif \"access plus 1 year\"" >> /usr/local/www/apache24/data/.htaccess
+echo "  ExpiresByType image/png \"access plus 1 year\"" >> /usr/local/www/apache24/data/.htaccess
+echo "  ExpiresByType image/webp \"access plus 1 year\"" >> /usr/local/www/apache24/data/.htaccess
+echo "  # CSS, JavaScript" >> /usr/local/www/apache24/data/.htaccess
+echo "  ExpiresByType text/css \"access plus 1 month\"" >> /usr/local/www/apache24/data/.htaccess
+echo "  ExpiresByType text/javascript \"access plus 1 month\"" >> /usr/local/www/apache24/data/.htaccess
+echo "  ExpiresByType application/javascript \"access plus 1 month\"" >> /usr/local/www/apache24/data/.htaccess
+echo "  # Others" >> /usr/local/www/apache24/data/.htaccess
+echo "  ExpiresByType application/pdf \"access plus 1 month\"" >> /usr/local/www/apache24/data/.htaccess
+echo "  ExpiresByType image/x-icon \"access plus 1 year\"" >> /usr/local/www/apache24/data/.htaccess
+echo "</IfModule>" >> /usr/local/www/apache24/data/.htaccess
+# Continue appending to .htaccess for Expires headers CAN BE DELETED
+
+
 
 ## Create a proper WP_CONFIG.PHP, populate it with required DB info and randomize the required values ##
 WP_DB_PREFIX=$(password_generator generate --length 4 --lower)
