@@ -42,11 +42,24 @@ fi
 printf "\n"
 printf "Installing and configuring software "
 
-# Prompt for domain name and email address
-echo "Please enter the domain name for the SSL certificate (e.g., example.com):"
-read DOMAIN
-echo "Please enter your email address for SSL certificate notifications:"
-read EMAIL
+# Check for passed arguments, then environment variables, and finally prompt for input if necessary
+if [ ! -z "$1" ]; then
+  DOMAIN=$1
+elif [ ! -z "$DOMAIN" ]; then
+  echo "Using domain from environment: $DOMAIN"
+else
+  echo "Please enter the domain name for the SSL certificate (e.g., example.com):"
+  read DOMAIN
+fi
+
+if [ ! -z "$2" ]; then
+  EMAIL=$2
+elif [ ! -z "$EMAIL" ]; then
+  echo "Using email from environment: $EMAIL"
+else
+  echo "Please enter your email address for SSL certificate notifications:"
+  read EMAIL
+fi
 
 ## Install the software required for basic jail stuff ##
 pkg update -fq  
