@@ -42,16 +42,6 @@ fi
 printf "\n"
 printf "Installing and configuring software "
 
-# Attempt to use the first script argument or environment variable for DOMAIN, falling back to the server's hostname
-DOMAIN=${1:-${DOMAIN:-$(hostname)}}
-echo "Using domain: $DOMAIN"
-
-# Use a predefined email address for SSL certificate notifications
-EMAIL="onisei_dragos@yahoo.com"
-echo "Using email for SSL certificate notifications: $EMAIL"
-
-# Continue with script logic, now that DOMAIN and EMAIL are determined
-
 ## Install the software required for basic jail stuff ##
 pkg update -fq  
 pkg upgrade -y  
@@ -163,16 +153,7 @@ cd /root/
 curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar  
 chmod +x wp-cli.phar
 sudo mv wp-cli.phar /usr/local/bin/wp
-
- # Install Certbot if it's not already installed
-pkg install -y py38-certbot
-
-# Request an SSL certificate for your domain
-certbot certonly --apache -d ${DOMAIN} -m ${EMAIL} --agree-tos --non-interactive
-
-# Paths to the generated SSL certificate and key
-CERT_PATH="/usr/local/etc/letsencrypt/live/${DOMAIN}/fullchain.pem"
-KEY_PATH="/usr/local/etc/letsencrypt/live/${DOMAIN}/privkey.pem"
+ 
 
 ## Make Apache conf file sensible and ready for use with WordPress
 cp /usr/local/etc/apache24/httpd.conf /usr/local/etc/apache24/httpd.conf.BACKUP
@@ -181,24 +162,6 @@ rm /usr/local/etc/apache24/httpd.conf
 cat <<'EOF_APACHE_CONFIG' | cat >/usr/local/etc/apache24/httpd.conf
 ServerRoot "/usr/local"
 Listen 80
-Listen 443
-LoadModule ssl_module libexec/apache24/mod_ssl.so
-
-<VirtualHost *:80>
-    ServerName ${DOMAIN}
-    DocumentRoot "/usr/local/www/apache24/data"
-    Redirect "/" "https://${DOMAIN}/"
-</VirtualHost>
-
-<VirtualHost *:443>
-    DocumentRoot "/usr/local/www/apache24/data"
-    ServerName ${DOMAIN}
-    SSLEngine on
-    SSLCertificateFile "${CERT_PATH}"
-    SSLCertificateKeyFile "${KEY_PATH}"
-    # Additional SSL configurations...
-</VirtualHost>
-
 LoadModule mpm_prefork_module libexec/apache24/mod_mpm_prefork.so
 LoadModule authn_file_module libexec/apache24/mod_authn_file.so
 LoadModule authn_core_module libexec/apache24/mod_authn_core.so
