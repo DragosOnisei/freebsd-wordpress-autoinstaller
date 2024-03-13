@@ -170,7 +170,7 @@ rm /usr/local/etc/apache24/httpd.conf
 
 cat <<'EOF_APACHE_CONFIG' | cat >/usr/local/etc/apache24/httpd.conf
 ServerRoot "/usr/local"
-Listen 443
+Listen 80
 LoadModule mpm_prefork_module libexec/apache24/mod_mpm_prefork.so
 LoadModule authn_file_module libexec/apache24/mod_authn_file.so
 LoadModule authn_core_module libexec/apache24/mod_authn_core.so
