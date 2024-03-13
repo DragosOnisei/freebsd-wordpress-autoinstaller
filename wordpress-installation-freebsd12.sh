@@ -42,24 +42,23 @@ fi
 printf "\n"
 printf "Installing and configuring software "
 
-# Check for passed arguments, then environment variables, and finally prompt for input if necessary
-if [ ! -z "$1" ]; then
-  DOMAIN=$1
-elif [ ! -z "$DOMAIN" ]; then
-  echo "Using domain from environment: $DOMAIN"
-else
-  echo "Please enter the domain name for the SSL certificate (e.g., example.com):"
-  read DOMAIN
+# Attempt to use the hostname as the domain if not specified as an argument or environment variable
+if [ -z "$1" ] && [ -z "$DOMAIN" ]; then
+  DOMAIN=$(hostname)
+  echo "No domain provided as argument or in DOMAIN environment variable."
+  echo "Attempting to use the server's hostname: $DOMAIN"
 fi
 
-if [ ! -z "$2" ]; then
-  EMAIL=$2
-elif [ ! -z "$EMAIL" ]; then
-  echo "Using email from environment: $EMAIL"
+# Check for EMAIL in arguments or environment variable, with no prompt fallback
+if [ -z "$2" ] && [ -z "$EMAIL" ]; then
+  echo "Error: Email address not provided. Please set the EMAIL environment variable or pass it as the second script argument."
+  exit 1
 else
-  echo "Please enter your email address for SSL certificate notifications:"
-  read EMAIL
+  EMAIL=${2:-$EMAIL}
+  echo "Using email for SSL certificate notifications: $EMAIL"
 fi
+
+# Proceed with your script, using $DOMAIN and $EMAIL as needed
 
 ## Install the software required for basic jail stuff ##
 pkg update -fq  
