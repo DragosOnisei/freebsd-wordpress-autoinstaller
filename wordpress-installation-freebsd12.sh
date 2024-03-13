@@ -46,14 +46,9 @@ printf "Installing and configuring software "
 DOMAIN=${1:-${DOMAIN:-$(hostname)}}
 echo "Using domain: $DOMAIN"
 
-# Use the second script argument or environment variable for EMAIL, exit if not provided
-if [ -z "$2" ] && [ -z "$EMAIL" ]; then
-  echo "Error: Email address not provided. Please set the EMAIL environment variable or pass it as the second script argument."
-  exit 1
-else
-  EMAIL=${2:-$EMAIL}
-  echo "Using email for SSL certificate notifications: $EMAIL"
-fi
+# Use a predefined email address for SSL certificate notifications
+EMAIL="onisei_dragos@yahoo.com"
+echo "Using email for SSL certificate notifications: $EMAIL"
 
 # Continue with script logic, now that DOMAIN and EMAIL are determined
 
