@@ -42,14 +42,11 @@ fi
 printf "\n"
 printf "Installing and configuring software "
 
-# Attempt to use the hostname as the domain if not specified as an argument or environment variable
-if [ -z "$1" ] && [ -z "$DOMAIN" ]; then
-  DOMAIN=$(hostname)
-  echo "No domain provided as argument or in DOMAIN environment variable."
-  echo "Attempting to use the server's hostname: $DOMAIN"
-fi
+# Attempt to use the first script argument or environment variable for DOMAIN, falling back to the server's hostname
+DOMAIN=${1:-${DOMAIN:-$(hostname)}}
+echo "Using domain: $DOMAIN"
 
-# Check for EMAIL in arguments or environment variable, with no prompt fallback
+# Use the second script argument or environment variable for EMAIL, exit if not provided
 if [ -z "$2" ] && [ -z "$EMAIL" ]; then
   echo "Error: Email address not provided. Please set the EMAIL environment variable or pass it as the second script argument."
   exit 1
@@ -58,7 +55,7 @@ else
   echo "Using email for SSL certificate notifications: $EMAIL"
 fi
 
-# Proceed with your script, using $DOMAIN and $EMAIL as needed
+# Continue with script logic, now that DOMAIN and EMAIL are determined
 
 ## Install the software required for basic jail stuff ##
 pkg update -fq  
