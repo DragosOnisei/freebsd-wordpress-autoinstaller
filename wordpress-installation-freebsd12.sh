@@ -21,6 +21,9 @@ CYAN='\033[0;36m'
 # LIGHTCYAN='\033[1;36m'
 # WHITE='\033[1;37m'
 
+# Exit on error
+set -e -u
+
 if [[ $USER = root ]]; then
     # shellcheck disable=SC2059
     printf "You ${GREEN}passed the root user check${NC}, all good.\n"
@@ -143,9 +146,15 @@ cat <<'EOF_ENABLE_PHP_FILES' | cat >/usr/local/etc/apache24/Includes/php.conf
 </IfModule>
 EOF_ENABLE_PHP_FILES
 
+## Make a self-signed SSL cert
+mkdir -p /usr/local/www/apache24/ssl/
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /usr/local/www/apache24/ssl/self.key -out /usr/local/www/apache24/ssl/self.crt -subj "/C=GB/ST=London/L=London/O=Global Security/OU=Gateway-IT Department/CN=gateway-it.intranet" &>/dev/null
+
+chown www:www /usr/local/www/apache24/ssl/self.key
+chown www:www /usr/local/www/apache24/ssl/self.crt
+
 # shellcheck disable=SC2059
 printf "${GREEN}Done${NC}\n"
-
 printf "Downloading WordPress, WP-CLI and populating the default config files "
 
 ## Download and install wp-cli ##
@@ -161,7 +170,7 @@ rm /usr/local/etc/apache24/httpd.conf
 
 cat <<'EOF_APACHE_CONFIG' | cat >/usr/local/etc/apache24/httpd.conf
 ServerRoot "/usr/local"
-Listen 80
+Listen 443
 LoadModule mpm_prefork_module libexec/apache24/mod_mpm_prefork.so
 LoadModule authn_file_module libexec/apache24/mod_authn_file.so
 LoadModule authn_core_module libexec/apache24/mod_authn_core.so
@@ -209,6 +218,10 @@ ServerAdmin random@rdomain.intranet
     AllowOverride None
     Require all denied
 </Directory>
+
+SSLEngine on
+SSLCertificateFile /usr/local/www/apache24/ssl/self.crt
+SSLCertificateKeyFile /usr/local/www/apache24/ssl/self.key
 
 DocumentRoot "/usr/local/www/apache24/data"
 <Directory "/usr/local/www/apache24/data">
@@ -352,28 +365,6 @@ echo "php_value memory_limit 256M" >>/usr/local/www/apache24/data/.htaccess
 echo "php_value max_execution_time 300" >>/usr/local/www/apache24/data/.htaccess
 echo "php_value max_input_time 300" >>/usr/local/www/apache24/data/.htaccess
 
-
-# Continue appending to .htaccess for Expires headers CAN BE DELETED
-echo "# EXPIRES HEADER CACHING" >> /usr/local/www/apache24/data/.htaccess
-echo "<IfModule mod_expires.c>" >> /usr/local/www/apache24/data/.htaccess
-echo "  ExpiresActive On" >> /usr/local/www/apache24/data/.htaccess
-echo "  # Images" >> /usr/local/www/apache24/data/.htaccess
-echo "  ExpiresByType image/jpeg \"access plus 1 year\"" >> /usr/local/www/apache24/data/.htaccess
-echo "  ExpiresByType image/gif \"access plus 1 year\"" >> /usr/local/www/apache24/data/.htaccess
-echo "  ExpiresByType image/png \"access plus 1 year\"" >> /usr/local/www/apache24/data/.htaccess
-echo "  ExpiresByType image/webp \"access plus 1 year\"" >> /usr/local/www/apache24/data/.htaccess
-echo "  # CSS, JavaScript" >> /usr/local/www/apache24/data/.htaccess
-echo "  ExpiresByType text/css \"access plus 1 month\"" >> /usr/local/www/apache24/data/.htaccess
-echo "  ExpiresByType text/javascript \"access plus 1 month\"" >> /usr/local/www/apache24/data/.htaccess
-echo "  ExpiresByType application/javascript \"access plus 1 month\"" >> /usr/local/www/apache24/data/.htaccess
-echo "  # Others" >> /usr/local/www/apache24/data/.htaccess
-echo "  ExpiresByType application/pdf \"access plus 1 month\"" >> /usr/local/www/apache24/data/.htaccess
-echo "  ExpiresByType image/x-icon \"access plus 1 year\"" >> /usr/local/www/apache24/data/.htaccess
-echo "</IfModule>" >> /usr/local/www/apache24/data/.htaccess
-# Continue appending to .htaccess for Expires headers CAN BE DELETED
-
-
-
 ## Create a proper WP_CONFIG.PHP, populate it with required DB info and randomize the required values ##
 WP_DB_PREFIX=$(password_generator generate --length 4 --lower)
 WP_SALT1=$(password_generator generate --length 55)
@@ -468,16 +459,18 @@ $table_prefix = 'wp_';
 // define('DISABLE_WP_CRON', true);
 define('WP_DEBUG', false);
 
-if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
-    $_SERVER['HTTPS'] = 'on';
-    define('WP_SITEURL', 'https://' . $_SERVER['HTTP_HOST']);
-    define('WP_HOME', 'https://' . $_SERVER['HTTP_HOST']);
-} else {
-    define('WP_SITEURL', 'http://' . $_SERVER['HTTP_HOST']);
-    define('WP_HOME', 'http://' . $_SERVER['HTTP_HOST']);
-}
+define('WP_SITEURL', 'https://'.$_SERVER['HTTP_HOST']);
+define('WP_HOME', 'https://'.$_SERVER['HTTP_HOST']);
+define('FORCE_SSL_ADMIN', true);
 
-define( 'WP_CACHE', true );
+if (strpos($_SERVER['HTTP_X_FORWARDED_PROTO'], 'https') !== false)
+$_SERVER['HTTPS']='on';
+
+// If we're behind a proxy server and using HTTPS, we need to alert WordPress of that fact
+// see also http://codex.wordpress.org/Administration_Over_SSL#Using_a_Reverse_Proxy
+if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
+	$_SERVER['HTTPS'] = 'on';
+}
 
 /* That's all, stop editing! Happy publishing. */
 
@@ -505,9 +498,6 @@ sed -i '' "/'DB_PASSWORD'/s/password_here/$DB_WPDB_USER_PASSWORD/" /usr/local/ww
 sed -i '' "/\$table_prefix =/s/'wp_'/'${WP_DB_PREFIX}_'/" /usr/local/www/apache24/data/wp-config.php
 
 printf ". "
-
-# Commands to restart Apache and apply final configurations
-service apache24 restart
 
 # shellcheck disable=SC2059
 printf "${GREEN}Done${NC}\n"
